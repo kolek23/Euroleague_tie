@@ -47,6 +47,11 @@
     .standings-card tbody tr { border-bottom:1px solid var(--border); transition:background 0.15s; cursor:default; }
     .standings-card tbody tr:last-child { border-bottom:none; }
     .standings-card tbody tr:hover { background:rgba(232,181,0,0.04); }
+    /* Soft zone backgrounds */
+    .zone-playoffs { background: rgba(255,106,0,0.07); }
+    .zone-playoffs:hover { background: rgba(255,106,0,0.12) !important; }
+    .zone-playin   { background: rgba(62,207,207,0.06); }
+    .zone-playin:hover   { background: rgba(62,207,207,0.11) !important; }
     .standings-card td { padding:11px 14px; vertical-align:middle; }
     .standings-card td.num { text-align:right; font-variant-numeric:tabular-nums; color:var(--muted); }
 
@@ -125,7 +130,7 @@
     .h2h-game-row:last-child { border-bottom:none; }
     .h2h-game-row.upcoming { color:var(--muted); font-style:italic; }
     .h2h-teams { display:flex; align-items:center; gap:6px; flex:1; min-width:0; }
-    .h2h-team { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; color:var(--text); }
+    .h2h-team { font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:13px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px; }
     .h2h-vs { color:var(--muted); font-size:11px; }
     .h2h-score { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; white-space:nowrap; min-width:56px; text-align:center; }
     .h2h-score .win  { color:var(--green); }
@@ -161,9 +166,10 @@
 <script>
 'use strict';
 
-const SEASON          = 'E2025';
-const API_URL         = 'https://api-live.euroleague.net/v1/results?seasonCode=' + SEASON;
-const PROXY_URL       = 'https://corsproxy.io/?url=' + encodeURIComponent(API_URL);
+const SEASON           = 'E2025';
+const RESULTS_URL      = 'https://api-live.euroleague.net/v1/results?seasonCode='  + SEASON;
+const SCHEDULES_URL    = 'https://api-live.euroleague.net/v1/schedules?seasonCode=' + SEASON;
+const proxy = url => 'https://corsproxy.io/?url=' + encodeURIComponent(url);
 const PLAYOFF_CUTOFF  = 6;   // after rank 6: direct playoff line
 const PLAYIN_CUTOFF   = 10;  // after rank 10: play-in line
 
@@ -178,36 +184,67 @@ const TIE_PALETTE = [
 ];
 
 /* ── 1. FETCH ───────────────────────────────── */
-async function loadGames() {
+
+// Fetch one URL, fall back to CORS proxy if direct fails
+async function fetchXML(url) {
   let text;
   try {
-    const r = await fetch(API_URL, { headers:{ Accept:'application/xml' } });
+    const r = await fetch(url, { headers:{ Accept:'application/xml' } });
     if (!r.ok) throw new Error('direct failed');
     text = await r.text();
   } catch(_) {
-    const r = await fetch(PROXY_URL);
-    if (!r.ok) throw new Error('API error ' + r.status);
+    const r = await fetch(proxy(url));
+    if (!r.ok) throw new Error('API error ' + r.status + ' for ' + url);
     text = await r.text();
   }
-
   const xml = new DOMParser().parseFromString(text, 'application/xml');
-  if (xml.querySelector('parsererror')) throw new Error('XML parse error');
+  if (xml.querySelector('parsererror')) throw new Error('XML parse error for ' + url);
+  return xml;
+}
 
-  const played = [], upcoming = [];
-  for (const g of xml.querySelectorAll('game')) {
-    const get = tag => { const el = g.querySelector(tag); return el ? el.textContent.trim() : ''; };
-    const homeCode = get('homecode'), awayCode = get('awaycode');
-    if (!homeCode || !awayCode) continue;
-    const round = parseInt(get('gameday') || get('gamenumber'), 10) || 0;
-    const date  = get('date');
-    if (get('played').toLowerCase() === 'true') {
-      const hs = parseInt(get('homescore'), 10), as_ = parseInt(get('awayscore'), 10);
-      if (isNaN(hs) || isNaN(as_)) continue;
-      played.push({ id:get('gamecode'), round, date, homeCode, homeName:get('hometeam'), homeScore:hs, awayCode, awayName:get('awayteam'), awayScore:as_, winner: hs>as_ ? homeCode : awayCode, diff:Math.abs(hs-as_) });
-    } else {
-      upcoming.push({ id:get('gamecode'), round, date, homeCode, homeName:get('hometeam'), awayCode, awayName:get('awayteam') });
+function parseGame(g, requirePlayed) {
+  const get = tag => { const el = g.querySelector(tag); return el ? el.textContent.trim() : ''; };
+  const homeCode = get('homecode'), awayCode = get('awaycode');
+  if (!homeCode || !awayCode) return null;
+  const round    = parseInt(get('gameday') || get('gamenumber'), 10) || 0;
+  const date     = get('date');
+  const isPlayed = get('played').toLowerCase() === 'true';
+  if (requirePlayed && !isPlayed) return null;
+  if (!requirePlayed && isPlayed) return null;
+  if (isPlayed) {
+    const hs = parseInt(get('homescore'), 10), as_ = parseInt(get('awayscore'), 10);
+    if (isNaN(hs) || isNaN(as_)) return null;
+    return { id:get('gamecode'), round, date, homeCode, homeName:get('hometeam'), homeScore:hs, awayCode, awayName:get('awayteam'), awayScore:as_, winner: hs>as_ ? homeCode : awayCode, diff:Math.abs(hs-as_) };
+  }
+  return { id:get('gamecode'), round, date, homeCode, homeName:get('hometeam'), awayCode, awayName:get('awayteam') };
+}
+
+async function loadGames() {
+  // Fetch results and schedule in parallel
+  // /results uses <game> elements, /schedules uses <item> elements
+  const [resultsXml, schedulesXml] = await Promise.all([
+    fetchXML(RESULTS_URL),
+    fetchXML(SCHEDULES_URL),
+  ]);
+
+  const played = [];
+  for (const g of resultsXml.querySelectorAll('game')) {
+    const parsed = parseGame(g, true);
+    if (parsed) played.push(parsed);
+  }
+
+  // Build a set of already-played game IDs so we don't show them as upcoming
+  const playedIds = new Set(played.map(g => g.id));
+  const upcoming  = [];
+
+  // Schedules uses <item> tags and has both played + unplayed entries
+  for (const g of schedulesXml.querySelectorAll('item')) {
+    const parsed = parseGame(g, false);  // false = want unplayed only
+    if (parsed && !playedIds.has(parsed.id)) {
+      upcoming.push(parsed);
     }
   }
+
   return { played, upcoming };
 }
 
@@ -281,7 +318,9 @@ function buildStandingsTable(standings, tiedGroups) {
       const p = TIE_PALETTE[idx % TIE_PALETTE.length];
       pill = '<span class="tie-pill" style="--pc:'+p.pill+';--bc:'+p.bg+'" onclick="scrollToTie('+idx+')" title="View tiebreaker">TIE</span>';
     }
-    const cls = t.rank === PLAYOFF_CUTOFF + 1 ? 'cutoff-playoffs' : t.rank === PLAYIN_CUTOFF + 1 ? 'cutoff-playin' : '';
+    const cutoffCls = t.rank === PLAYOFF_CUTOFF + 1 ? 'cutoff-playoffs' : t.rank === PLAYIN_CUTOFF + 1 ? 'cutoff-playin' : '';
+    const zoneCls   = t.rank <= PLAYOFF_CUTOFF ? 'zone-playoffs' : t.rank <= PLAYIN_CUTOFF ? 'zone-playin' : '';
+    const cls = (cutoffCls + ' ' + zoneCls).trim();
     return '<tr class="'+cls+'"><td class="rank-col">'+t.rank+'</td><td><div class="team-cell">'+initials(t.code)+'<div><div class="team-abbr">'+t.code+'</div><div class="team-full">'+t.name+'</div></div></div></td><td class="wins-col">'+t.wins+'</td><td class="losses-col">'+t.losses+'</td><td class="num">'+t.pf+'</td><td class="num">'+t.pa+'</td><td class="num">'+fmtDiff(t.diff)+'</td><td>'+pill+'</td></tr>';
   }).join('');
 
@@ -295,19 +334,19 @@ function buildH2HPanel(group, played, upcoming, panelId) {
   const h2hUpcoming = upcoming.filter(g => codesSet.has(g.homeCode) && codesSet.has(g.awayCode)).sort((a,b) => a.round - b.round);
 
   let html = '<div class="h2h-panel" id="'+panelId+'">';
-  html += '<div class="h2h-section-title">Results</div>';
+  if (h2hUpcoming.length) {
+    html += '<div class="h2h-section-title">Upcoming</div>';
+    for (const g of h2hUpcoming) {
+      html += '<div class="h2h-game-row upcoming"><div class="h2h-teams"><span class="h2h-team">'+g.homeName+'</span><span class="h2h-vs">vs</span><span class="h2h-team">'+g.awayName+'</span></div><div class="h2h-score" style="color:var(--muted)">&mdash;</div><div class="h2h-meta">Round '+g.round+(g.date?' &middot; '+g.date:'')+'</div></div>';
+    }
+  }
+  html += '<div class="h2h-section-title" style="margin-top:4px">Results</div>';
   if (!h2hPlayed.length) {
     html += '<div class="no-h2h">No games played yet between these teams.</div>';
   } else {
     for (const g of h2hPlayed) {
       const hw = g.winner === g.homeCode;
-      html += '<div class="h2h-game-row"><div class="h2h-teams"><span class="h2h-team">'+g.homeCode+'</span><span class="h2h-vs">vs</span><span class="h2h-team">'+g.awayCode+'</span></div><div class="h2h-score"><span class="'+(hw?'win':'lose')+'">'+g.homeScore+'</span><span style="color:var(--muted)"> &ndash; </span><span class="'+(hw?'lose':'win')+'">'+g.awayScore+'</span></div><div class="h2h-meta">R'+g.round+(g.date?' &middot; '+g.date:'')+'</div></div>';
-    }
-  }
-  if (h2hUpcoming.length) {
-    html += '<div class="h2h-section-title" style="margin-top:4px">Upcoming</div>';
-    for (const g of h2hUpcoming) {
-      html += '<div class="h2h-game-row upcoming"><div class="h2h-teams"><span class="h2h-team">'+g.homeCode+'</span><span class="h2h-vs">vs</span><span class="h2h-team">'+g.awayCode+'</span></div><div class="h2h-score" style="color:var(--muted)">&mdash;</div><div class="h2h-meta">Round '+g.round+(g.date?' &middot; '+g.date:'')+'</div></div>';
+      html += '<div class="h2h-game-row"><div class="h2h-teams"><span class="h2h-team">'+g.homeName+'</span><span class="h2h-vs">vs</span><span class="h2h-team">'+g.awayName+'</span></div><div class="h2h-score"><span class="'+(hw?'win':'lose')+'">'+g.homeScore+'</span><span style="color:var(--muted)"> &ndash; </span><span class="'+(hw?'lose':'win')+'">'+g.awayScore+'</span></div><div class="h2h-meta">R'+g.round+(g.date?' &middot; '+g.date:'')+'</div></div>';
     }
   }
   html += '</div>';
