@@ -8,264 +8,139 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
       --bg:      #0b0c10;
       --surface: #13151c;
       --card:    #1a1d27;
       --border:  #252836;
       --accent:  #e8b500;
-      --accent2: #ff4a2e;
+      --accent2: #ff6a00;
+      --playin:  #3ecfcf;
       --text:    #e8eaf0;
       --muted:   #6b7080;
       --green:   #2ecc71;
       --red:     #e74c3c;
       --radius:  8px;
     }
+    body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; font-size:14px; min-height:100vh; }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      min-height: 100vh;
-    }
+    header { background:var(--surface); border-bottom:2px solid var(--accent); padding:0 32px; display:flex; align-items:center; justify-content:space-between; height:64px; position:sticky; top:0; z-index:100; }
+    .logo { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; letter-spacing:0.08em; text-transform:uppercase; }
+    .logo span { color:var(--accent); }
+    .header-right { display:flex; align-items:center; gap:12px; }
+    .season-badge { background:var(--accent); color:#000; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:0.12em; padding:4px 12px; border-radius:4px; }
+    .refresh-btn { background:transparent; border:1px solid var(--border); color:var(--muted); font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; padding:5px 12px; border-radius:4px; cursor:pointer; transition:border-color 0.15s,color 0.15s; }
+    .refresh-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .last-updated { font-size:11px; color:var(--muted); font-style:italic; }
 
-    /* ── Header ───────────────────────────────────────────── */
-    header {
-      background: var(--surface);
-      border-bottom: 2px solid var(--accent);
-      padding: 0 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 64px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .logo {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 900;
-      font-size: 22px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .logo span { color: var(--accent); }
+    main { max-width:1340px; margin:0 auto; padding:36px 24px; display:grid; grid-template-columns:1fr 494px; gap:28px; align-items:start; }
+    @media (max-width:900px) { main { grid-template-columns:1fr; } }
 
-    .header-right { display: flex; align-items: center; gap: 12px; }
-
-    .season-badge {
-      background: var(--accent);
-      color: #000;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 700;
-      font-size: 13px;
-      letter-spacing: 0.12em;
-      padding: 4px 12px;
-      border-radius: 4px;
-    }
-
-    .refresh-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 600;
-      font-size: 12px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 5px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-    /* ── Layout ───────────────────────────────────────────── */
-    main {
-      max-width: 1340px;
-      margin: 0 auto;
-      padding: 36px 24px;
-      display: grid;
-      grid-template-columns: 1fr 494px;
-      gap: 28px;
-      align-items: start;
-    }
-    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
-
-    /* ── Section label ────────────────────────────────────── */
-    .section-label {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 700;
-      font-size: 11px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .section-label { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
     .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
 
-    /* ── Main standings table ─────────────────────────────── */
-    .standings-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
+    .standings-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:visible; }
     .standings-card table { width:100%; border-collapse:collapse; }
     .standings-card thead tr { background:var(--surface); border-bottom:1px solid var(--border); }
-    .standings-card th {
-      font-family:'Barlow Condensed',sans-serif;
-      font-weight:600; font-size:11px; letter-spacing:0.15em;
-      text-transform:uppercase; color:var(--muted);
-      padding:12px 14px; text-align:left;
-    }
+    .standings-card th { font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); padding:12px 14px; text-align:left; }
     .standings-card th.num { text-align:right; }
-    .standings-card tbody tr {
-      border-bottom:1px solid var(--border);
-      transition:background 0.15s; cursor:default;
-    }
+    .standings-card tbody tr { border-bottom:1px solid var(--border); transition:background 0.15s; cursor:default; }
     .standings-card tbody tr:last-child { border-bottom:none; }
     .standings-card tbody tr:hover { background:rgba(232,181,0,0.04); }
     .standings-card td { padding:11px 14px; vertical-align:middle; }
     .standings-card td.num { text-align:right; font-variant-numeric:tabular-nums; color:var(--muted); }
 
-    .rank-col {
-      font-family:'Barlow Condensed',sans-serif;
-      font-weight:700; font-size:16px; color:var(--muted);
-      width:32px; text-align:center !important;
-    }
-
+    .rank-col { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:16px; color:var(--muted); width:32px; text-align:center !important; }
     .team-cell { display:flex; align-items:center; gap:10px; }
-    .team-initials {
-      width:28px; height:28px; border-radius:50%;
-      background:var(--surface);
-      display:flex; align-items:center; justify-content:center;
-      font-family:'Barlow Condensed',sans-serif;
-      font-weight:700; font-size:9px; color:var(--accent);
-      flex-shrink:0; letter-spacing:0;
-    }
-    .team-abbr {
-      font-family:'Barlow Condensed',sans-serif;
-      font-weight:700; font-size:15px; letter-spacing:0.05em; color:var(--text);
-    }
-    .team-full {
-      font-size:12px; color:var(--muted); font-weight:300;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;
-    }
-
-    .wins-col  { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:18px; color:var(--text); text-align:right !important; }
-    .losses-col{ font-family:'Barlow Condensed',sans-serif; font-weight:400; font-size:18px; color:var(--muted); text-align:right !important; }
-
+    .team-initials { width:28px; height:28px; border-radius:50%; background:var(--surface); display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9px; color:var(--accent); flex-shrink:0; letter-spacing:0; }
+    .team-abbr { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:0.05em; color:var(--text); }
+    .team-full { font-size:12px; color:var(--muted); font-weight:300; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
+    .wins-col   { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:18px; color:var(--text); text-align:right !important; }
+    .losses-col { font-family:'Barlow Condensed',sans-serif; font-weight:400; font-size:18px; color:var(--muted); text-align:right !important; }
     .diff-pos { color:var(--green); }
     .diff-neg { color:var(--red); }
 
-    /* Tie pill — colour via CSS vars set inline */
-    .tie-pill {
-      display:inline-flex; align-items:center; gap:4px;
-      background:var(--bc, rgba(232,181,0,0.12));
-      border:1px solid var(--pc, rgba(232,181,0,0.35));
-      color:var(--pc, #e8b500);
-      font-family:'Barlow Condensed',sans-serif;
-      font-size:10px; font-weight:700; letter-spacing:0.1em;
-      padding:2px 7px; border-radius:20px; text-transform:uppercase;
-      cursor:pointer; transition:filter 0.15s;
-    }
+    .tie-pill { display:inline-flex; align-items:center; background:var(--bc,rgba(232,181,0,0.12)); border:1px solid var(--pc,rgba(232,181,0,0.35)); color:var(--pc,#e8b500); font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.1em; padding:2px 7px; border-radius:20px; text-transform:uppercase; cursor:pointer; transition:filter 0.15s; }
     .tie-pill:hover { filter:brightness(1.3); }
 
-    /* Playoff cutoff line */
-    .playoff-line td { border-top:2px solid var(--accent2) !important; }
-    .playoff-label { position:relative; }
-    .playoff-label::before {
+    /* Cutoff lines - sit ON the row below the cutoff */
+    .cutoff-playoffs td { border-top:2px solid var(--accent2) !important; position:relative; }
+    .cutoff-playoffs td:last-child { position:relative; }
+    .cutoff-playoffs td:last-child::after {
       content:'PLAYOFFS';
-      position:absolute; top:-11px; right:14px;
-      font-family:'Barlow Condensed',sans-serif;
-      font-size:9px; font-weight:700; letter-spacing:0.15em; color:var(--accent2);
+      position:absolute; top:-14px; right:8px;
+      font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:700; letter-spacing:0.15em;
+      color:var(--accent2); background:var(--card); padding:0 4px;
+    }
+    .cutoff-playin td { border-top:2px solid var(--playin) !important; position:relative; }
+    .cutoff-playin td:last-child::after {
+      content:'PLAY-IN';
+      position:absolute; top:-14px; right:8px;
+      font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:700; letter-spacing:0.15em;
+      color:var(--playin); background:var(--card); padding:0 4px;
     }
 
-    /* ── Right panel ──────────────────────────────────────── */
     .right-panel { display:flex; flex-direction:column; gap:24px; }
-
     .tie-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
-    .tie-card-header {
-      background:var(--surface); border-bottom:1px solid var(--border);
-      padding:12px 16px; display:flex; align-items:center; justify-content:space-between;
-    }
+    .tie-card-header { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; }
     .tie-wins-badge { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; line-height:1; }
-    .tie-wins-label {
-      font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600;
-      letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-top:2px;
-    }
-    .tb-tag {
-      font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:700;
-      letter-spacing:0.12em; text-transform:uppercase;
-      padding:3px 8px; border-radius:4px; border:1px solid;
-    }
+    .tie-wins-label { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+    .tb-tag { font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; padding:3px 8px; border-radius:4px; border:1px solid; }
 
     .mini-table { width:100%; border-collapse:collapse; }
     .mini-table thead tr { border-bottom:1px solid var(--border); }
-    .mini-table th {
-      font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:600;
-      letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); padding:8px 14px; text-align:left;
-    }
+    .mini-table th { font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); padding:8px 14px; text-align:left; }
     .mini-table th.num { text-align:right; }
     .mini-table tbody tr { border-bottom:1px solid var(--border); transition:background 0.12s; }
     .mini-table tbody tr:last-child { border-bottom:none; }
     .mini-table tbody tr:hover { background:rgba(255,255,255,0.02); }
     .mini-table td { padding:10px 14px; }
     .mini-table td.num { text-align:right; font-variant-numeric:tabular-nums; }
-
     .mini-rank { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; width:24px; color:var(--muted); }
-
     .h2h-record { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:16px; }
     .h2h-record .w { color:var(--green); }
     .h2h-record .l { color:var(--muted); }
     .h2h-diff-pos { color:var(--green); font-size:13px; }
     .h2h-diff-neg { color:var(--red); font-size:13px; }
     .h2h-diff-neu { color:var(--muted); font-size:13px; }
+    .mini-tb-note { padding:8px 14px; font-size:11px; color:var(--muted); border-top:1px solid var(--border); font-style:italic; }
 
-    .mini-tb-note {
-      padding:8px 14px; font-size:11px; color:var(--muted);
-      border-top:1px solid var(--border); font-style:italic;
+    /* See results button */
+    .see-results-btn {
+      display:flex; align-items:center; justify-content:center; gap:6px;
+      width:100%; padding:9px 14px;
+      background:transparent; border:none; border-top:1px solid var(--border);
+      color:var(--muted); font-family:'Barlow Condensed',sans-serif;
+      font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase;
+      cursor:pointer; transition:background 0.15s,color 0.15s;
     }
+    .see-results-btn:hover { background:rgba(255,255,255,0.03); color:var(--text); }
+    .see-results-btn .arr { transition:transform 0.2s; display:inline-block; }
 
-    /* ── Legend ───────────────────────────────────────────── */
-    .legend {
-      display:flex; gap:18px; flex-wrap:wrap;
-      padding:14px 16px;
-      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-      font-size:11px; color:var(--muted);
-    }
+    /* Expandable H2H panel */
+    .h2h-panel { display:none; border-top:1px solid var(--border); }
+    .h2h-panel.open { display:block; }
+    .h2h-section-title { font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); padding:10px 14px 4px; }
+    .h2h-game-row { display:flex; align-items:center; justify-content:space-between; padding:7px 14px; border-bottom:1px solid var(--border); font-size:12px; gap:8px; }
+    .h2h-game-row:last-child { border-bottom:none; }
+    .h2h-game-row.upcoming { color:var(--muted); font-style:italic; }
+    .h2h-teams { display:flex; align-items:center; gap:6px; flex:1; min-width:0; }
+    .h2h-team { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; color:var(--text); }
+    .h2h-vs { color:var(--muted); font-size:11px; }
+    .h2h-score { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; white-space:nowrap; min-width:56px; text-align:center; }
+    .h2h-score .win  { color:var(--green); }
+    .h2h-score .lose { color:var(--red); }
+    .h2h-meta { font-size:10px; color:var(--muted); white-space:nowrap; text-align:right; }
+    .no-h2h { padding:12px 14px; font-size:12px; color:var(--muted); font-style:italic; }
+
+    .legend { display:flex; gap:18px; flex-wrap:wrap; padding:14px 16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); font-size:11px; color:var(--muted); }
     .legend-item { display:flex; align-items:center; gap:6px; }
     .legend-dot  { width:8px; height:8px; border-radius:50%; }
 
-    /* ── Loader / error ───────────────────────────────────── */
-    .loader {
-      display:flex; align-items:center; justify-content:center;
-      padding:60px; color:var(--muted); font-size:13px; gap:12px;
-      grid-column: 1 / -1;
-    }
-    .spinner {
-      width:20px; height:20px;
-      border:2px solid var(--border); border-top-color:var(--accent);
-      border-radius:50%; animation:spin 0.7s linear infinite;
-    }
+    .loader { display:flex; align-items:center; justify-content:center; padding:60px; color:var(--muted); font-size:13px; gap:12px; grid-column:1/-1; }
+    .spinner { width:20px; height:20px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
-
-    .error-box {
-      background:rgba(231,76,60,0.08); border:1px solid rgba(231,76,60,0.3);
-      border-radius:var(--radius); padding:20px; color:var(--red);
-      font-size:13px; grid-column: 1 / -1; line-height:1.7;
-    }
-
-    .last-updated {
-      font-size:11px; color:var(--muted);
-      font-style:italic;
-    }
+    .error-box { background:rgba(231,76,60,0.08); border:1px solid rgba(231,76,60,0.3); border-radius:var(--radius); padding:20px; color:var(--red); font-size:13px; grid-column:1/-1; line-height:1.7; }
   </style>
 </head>
 <body>
@@ -274,23 +149,23 @@
   <div class="logo">Euro<span>League</span> Tiebreaker</div>
   <div class="header-right">
     <span class="last-updated" id="last-updated"></span>
-    <button class="refresh-btn" onclick="init()">↻ Refresh</button>
-    <div class="season-badge">2025–26</div>
+    <button class="refresh-btn" onclick="init()">&#8635; Refresh</button>
+    <div class="season-badge">2025&#8211;26</div>
   </div>
 </header>
 
 <main id="main">
-  <div class="loader">
-    <div class="spinner"></div> Loading standings…
-  </div>
+  <div class="loader"><div class="spinner"></div> Loading standings&#8230;</div>
 </main>
 
 <script>
 'use strict';
 
-const SEASON      = 'E2025';
-const API_URL     = `https://api-live.euroleague.net/v1/results?seasonCode=${SEASON}`;
-const PROXY_URL   = `https://corsproxy.io/?url=${encodeURIComponent(API_URL)}`;
+const SEASON          = 'E2025';
+const API_URL         = 'https://api-live.euroleague.net/v1/results?seasonCode=' + SEASON;
+const PROXY_URL       = 'https://corsproxy.io/?url=' + encodeURIComponent(API_URL);
+const PLAYOFF_CUTOFF  = 6;   // after rank 6: direct playoff line
+const PLAYIN_CUTOFF   = 10;  // after rank 10: play-in line
 
 const TIE_PALETTE = [
   { pill:'#e8b500', bg:'rgba(232,181,0,0.13)'   },
@@ -302,299 +177,195 @@ const TIE_PALETTE = [
   { pill:'#60aaff', bg:'rgba(96,170,255,0.13)'  },
 ];
 
-/* ══════════════════════════════════════════════════════════
-   1. FETCH + PARSE XML
-══════════════════════════════════════════════════════════ */
+/* ── 1. FETCH ───────────────────────────────── */
 async function loadGames() {
-  // Try direct first, fall back to CORS proxy
   let text;
   try {
-    const r = await fetch(API_URL, { headers: { Accept: 'application/xml' } });
+    const r = await fetch(API_URL, { headers:{ Accept:'application/xml' } });
     if (!r.ok) throw new Error('direct failed');
     text = await r.text();
-  } catch {
+  } catch(_) {
     const r = await fetch(PROXY_URL);
-    if (!r.ok) throw new Error(`API error ${r.status}`);
+    if (!r.ok) throw new Error('API error ' + r.status);
     text = await r.text();
   }
 
-  const parser = new DOMParser();
-  const xml    = parser.parseFromString(text, 'application/xml');
-  const err    = xml.querySelector('parsererror');
-  if (err) throw new Error('XML parse error: ' + err.textContent.slice(0, 100));
+  const xml = new DOMParser().parseFromString(text, 'application/xml');
+  if (xml.querySelector('parsererror')) throw new Error('XML parse error');
 
-  const games = [];
+  const played = [], upcoming = [];
   for (const g of xml.querySelectorAll('game')) {
-    const get = tag => g.querySelector(tag)?.textContent?.trim() ?? '';
-
-    if (get('played').toLowerCase() !== 'true') continue;  // skip unplayed
-
-    const homeCode  = get('homecode');
-    const awayCode  = get('awaycode');
-    const homeName  = get('hometeam');
-    const awayName  = get('awayteam');
-    const homeScore = parseInt(get('homescore'), 10);
-    const awayScore = parseInt(get('awayscore'), 10);
-
-    if (!homeCode || !awayCode || isNaN(homeScore) || isNaN(awayScore)) continue;
-
-    games.push({
-      id:        get('gamecode'),
-      round:     parseInt(get('gameday') || get('gamenumber'), 10) || 0,
-      date:      get('date'),
-      homeCode, homeName, homeScore,
-      awayCode, awayName, awayScore,
-      winner:    homeScore > awayScore ? homeCode : awayCode,
-      diff:      Math.abs(homeScore - awayScore),
-    });
-  }
-
-  return games;
-}
-
-/* ══════════════════════════════════════════════════════════
-   2. BUILD STANDINGS
-══════════════════════════════════════════════════════════ */
-function buildStandings(games) {
-  const teams = {};
-
-  const ensure = (code, name) => {
-    if (!teams[code]) teams[code] = { code, name, wins:0, losses:0, pf:0, pa:0 };
-  };
-
-  for (const g of games) {
-    ensure(g.homeCode, g.homeName);
-    ensure(g.awayCode, g.awayName);
-    teams[g.homeCode].pf += g.homeScore;
-    teams[g.homeCode].pa += g.awayScore;
-    teams[g.awayCode].pf += g.awayScore;
-    teams[g.awayCode].pa += g.homeScore;
-    if (g.winner === g.homeCode) {
-      teams[g.homeCode].wins++;
-      teams[g.awayCode].losses++;
+    const get = tag => { const el = g.querySelector(tag); return el ? el.textContent.trim() : ''; };
+    const homeCode = get('homecode'), awayCode = get('awaycode');
+    if (!homeCode || !awayCode) continue;
+    const round = parseInt(get('gameday') || get('gamenumber'), 10) || 0;
+    const date  = get('date');
+    if (get('played').toLowerCase() === 'true') {
+      const hs = parseInt(get('homescore'), 10), as_ = parseInt(get('awayscore'), 10);
+      if (isNaN(hs) || isNaN(as_)) continue;
+      played.push({ id:get('gamecode'), round, date, homeCode, homeName:get('hometeam'), homeScore:hs, awayCode, awayName:get('awayteam'), awayScore:as_, winner: hs>as_ ? homeCode : awayCode, diff:Math.abs(hs-as_) });
     } else {
-      teams[g.awayCode].wins++;
-      teams[g.homeCode].losses++;
+      upcoming.push({ id:get('gamecode'), round, date, homeCode, homeName:get('hometeam'), awayCode, awayName:get('awayteam') });
     }
   }
-
-  return Object.values(teams).sort((a, b) => {
-    const wd = b.wins - a.wins;
-    if (wd !== 0) return wd;
-    return (b.pf - b.pa) - (a.pf - a.pa);
-  }).map((t, i) => ({ ...t, rank: i + 1, diff: t.pf - t.pa }));
+  return { played, upcoming };
 }
 
-/* ══════════════════════════════════════════════════════════
-   3. TIEBREAKER LOGIC
-══════════════════════════════════════════════════════════ */
-function computeTiedGroups(standings, games) {
-  // Group teams by win count
-  const byWins = {};
-  for (const t of standings) {
-    (byWins[t.wins] ??= []).push(t);
+/* ── 2. STANDINGS ───────────────────────────── */
+function buildStandings(played) {
+  const teams = {};
+  const ensure = (code, name) => { if (!teams[code]) teams[code] = { code, name, wins:0, losses:0, pf:0, pa:0 }; };
+  for (const g of played) {
+    ensure(g.homeCode, g.homeName); ensure(g.awayCode, g.awayName);
+    teams[g.homeCode].pf += g.homeScore; teams[g.homeCode].pa += g.awayScore;
+    teams[g.awayCode].pf += g.awayScore; teams[g.awayCode].pa += g.homeScore;
+    if (g.winner === g.homeCode) { teams[g.homeCode].wins++; teams[g.awayCode].losses++; }
+    else { teams[g.awayCode].wins++; teams[g.homeCode].losses++; }
   }
+  return Object.values(teams).sort((a,b) => { const wd=b.wins-a.wins; return wd||((b.pf-b.pa)-(a.pf-a.pa)); }).map((t,i) => ({...t, rank:i+1, diff:t.pf-t.pa}));
+}
 
+/* ── 3. TIEBREAKER ──────────────────────────── */
+function computeTiedGroups(standings, played) {
+  const byWins = {};
+  for (const t of standings) (byWins[t.wins] = byWins[t.wins] || []).push(t);
   const tiedGroups = [];
-
-  for (const [wins, group] of Object.entries(byWins)) {
+  for (const wins in byWins) {
+    const group = byWins[wins];
     if (group.length < 2) continue;
-
     const codes = new Set(group.map(t => t.code));
-
-    // H2H games only between teams in this group
     const h2h = {};
     for (const t of group) h2h[t.code] = { h2h_w:0, h2h_l:0, h2h_diff:0 };
-
-    for (const g of games) {
+    for (const g of played) {
       if (!codes.has(g.homeCode) || !codes.has(g.awayCode)) continue;
-      const signedDiff = g.homeScore - g.awayScore;
-      h2h[g.homeCode].h2h_diff += signedDiff;
-      h2h[g.awayCode].h2h_diff -= signedDiff;
-      if (g.winner === g.homeCode) {
-        h2h[g.homeCode].h2h_w++;
-        h2h[g.awayCode].h2h_l++;
-      } else {
-        h2h[g.awayCode].h2h_w++;
-        h2h[g.homeCode].h2h_l++;
-      }
+      const sd = g.homeScore - g.awayScore;
+      h2h[g.homeCode].h2h_diff += sd; h2h[g.awayCode].h2h_diff -= sd;
+      if (g.winner === g.homeCode) { h2h[g.homeCode].h2h_w++; h2h[g.awayCode].h2h_l++; }
+      else { h2h[g.awayCode].h2h_w++; h2h[g.homeCode].h2h_l++; }
     }
-
     const ranked = group.slice().sort((a, b) => {
       const wa = h2h[a.code], wb = h2h[b.code];
-      if (wb.h2h_w !== wa.h2h_w) return wb.h2h_w - wa.h2h_w;
-      if (wb.h2h_diff !== wa.h2h_diff) return wb.h2h_diff - wa.h2h_diff;
-      return b.diff - a.diff;
+      if (wb.h2h_w    !== wa.h2h_w)    return wb.h2h_w    - wa.h2h_w;    // rule 1
+      if (wb.h2h_diff !== wa.h2h_diff) return wb.h2h_diff - wa.h2h_diff; // rule 2
+      return b.diff - a.diff;                                              // rule 3
     });
-
-    tiedGroups.push({
-      wins: parseInt(wins),
-      teams: ranked.map(t => ({ ...t, ...h2h[t.code] })),
-    });
+    tiedGroups.push({ wins: parseInt(wins), teams: ranked.map(t => ({...t, ...h2h[t.code]})) });
   }
-
-  // Sort groups by wins descending
-  tiedGroups.sort((a, b) => b.wins - a.wins);
+  tiedGroups.sort((a,b) => b.wins - a.wins);
   return tiedGroups;
 }
 
-/* ══════════════════════════════════════════════════════════
-   4. RENDER HELPERS
-══════════════════════════════════════════════════════════ */
-const fmtDiff    = n => n > 0 ? `<span class="diff-pos">+${n}</span>`
-                       : n < 0 ? `<span class="diff-neg">${n}</span>`
-                       : `<span style="color:var(--muted)">0</span>`;
+/* ── 4. FORMAT HELPERS ──────────────────────── */
+const fmtDiff    = n => n>0 ? '<span class="diff-pos">+'+n+'</span>' : n<0 ? '<span class="diff-neg">'+n+'</span>' : '<span style="color:var(--muted)">0</span>';
+const fmtH2HDiff = n => n>0 ? '<span class="h2h-diff-pos">+'+n+'</span>' : n<0 ? '<span class="h2h-diff-neg">'+n+'</span>' : '<span class="h2h-diff-neu">0</span>';
+const initials   = code => '<div class="team-initials">'+code.slice(0,3)+'</div>';
 
-const fmtH2HDiff = n => n > 0 ? `<span class="h2h-diff-pos">+${n}</span>`
-                       : n < 0 ? `<span class="h2h-diff-neg">${n}</span>`
-                       : `<span class="h2h-diff-neu">0</span>`;
+function resolveNote(teams) {
+  if (teams.length < 2) return null;
+  const [a, b] = teams;
+  if (a.h2h_w    !== b.h2h_w)    return '&#9312; Head-to-head record decides';
+  if (a.h2h_diff !== b.h2h_diff) return '&#9313; H2H point differential decides';
+  if (a.diff     !== b.diff)     return '&#9314; Overall point differential decides';
+  return '&#9315; Further tiebreakers needed';
+}
 
-const initials   = code => `<div class="team-initials">${code.slice(0,3)}</div>`;
-
-/* ── Main table ── */
+/* ── 5. STANDINGS TABLE ─────────────────────── */
 function buildStandingsTable(standings, tiedGroups) {
   const tieMap = {};
   tiedGroups.forEach((g, i) => g.teams.forEach(t => { tieMap[t.code] = i; }));
 
-  const CUTOFF = 8;
-
   const rows = standings.map(t => {
-    const idx    = tieMap[t.code];
-    const hasTie = idx !== undefined;
+    const idx = tieMap[t.code];
     let pill = '';
-    if (hasTie) {
+    if (idx !== undefined) {
       const p = TIE_PALETTE[idx % TIE_PALETTE.length];
-      pill = `<span class="tie-pill" style="--pc:${p.pill};--bc:${p.bg}"
-               onclick="scrollToTie(${idx})" title="View tiebreaker">TIE</span>`;
+      pill = '<span class="tie-pill" style="--pc:'+p.pill+';--bc:'+p.bg+'" onclick="scrollToTie('+idx+')" title="View tiebreaker">TIE</span>';
     }
-
-    const plClass  = t.rank === CUTOFF + 1 ? 'playoff-line' : '';
-    const plLabel  = t.rank === CUTOFF + 1 ? 'playoff-label' : '';
-
-    return `<tr class="${plClass}">
-      <td class="rank-col ${plLabel}">${t.rank}</td>
-      <td><div class="team-cell">${initials(t.code)}<div>
-        <div class="team-abbr">${t.code}</div>
-        <div class="team-full">${t.name}</div>
-      </div></div></td>
-      <td class="wins-col">${t.wins}</td>
-      <td class="losses-col">${t.losses}</td>
-      <td class="num">${t.pf}</td>
-      <td class="num">${t.pa}</td>
-      <td class="num">${fmtDiff(t.diff)}</td>
-      <td>${pill}</td>
-    </tr>`;
+    const cls = t.rank === PLAYOFF_CUTOFF + 1 ? 'cutoff-playoffs' : t.rank === PLAYIN_CUTOFF + 1 ? 'cutoff-playin' : '';
+    return '<tr class="'+cls+'"><td class="rank-col">'+t.rank+'</td><td><div class="team-cell">'+initials(t.code)+'<div><div class="team-abbr">'+t.code+'</div><div class="team-full">'+t.name+'</div></div></div></td><td class="wins-col">'+t.wins+'</td><td class="losses-col">'+t.losses+'</td><td class="num">'+t.pf+'</td><td class="num">'+t.pa+'</td><td class="num">'+fmtDiff(t.diff)+'</td><td>'+pill+'</td></tr>';
   }).join('');
 
-  return `
-    <div class="section-label">Full Standings</div>
-    <div class="standings-card"><table>
-      <thead><tr>
-        <th></th><th>Team</th>
-        <th class="num">W</th><th class="num">L</th>
-        <th class="num">PF</th><th class="num">PA</th>
-        <th class="num">DIFF</th><th></th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>`;
+  return '<div class="section-label">Full Standings</div><div class="standings-card"><table><thead><tr><th></th><th>Team</th><th class="num">W</th><th class="num">L</th><th class="num">PF</th><th class="num">PA</th><th class="num">DIFF</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
-/* ── Tie cards ── */
-function buildTieCard(group, idx) {
-  const p = TIE_PALETTE[idx % TIE_PALETTE.length];
+/* ── 6. H2H EXPAND PANEL ────────────────────── */
+function buildH2HPanel(group, played, upcoming, panelId) {
+  const codesSet = new Set(group.teams.map(t => t.code));
+  const h2hPlayed   = played.filter(g   => codesSet.has(g.homeCode) && codesSet.has(g.awayCode)).sort((a,b) => b.round - a.round);
+  const h2hUpcoming = upcoming.filter(g => codesSet.has(g.homeCode) && codesSet.has(g.awayCode)).sort((a,b) => a.round - b.round);
 
-  const rows = group.teams.map((t, i) => `
-    <tr>
-      <td class="mini-rank" style="${i===0 ? `color:${p.pill}` : ''}">${i+1}</td>
-      <td><div class="team-cell">${initials(t.code)}<div>
-        <div class="team-abbr">${t.code}</div>
-        <div class="team-full">${t.name}</div>
-      </div></div></td>
-      <td class="num"><span class="h2h-record">
-        <span class="w">${t.h2h_w}</span><span class="l">–${t.h2h_l}</span>
-      </span></td>
-      <td class="num">${fmtH2HDiff(t.h2h_diff)}</td>
-    </tr>`).join('');
-
-  const [a, b] = group.teams;
-  const note = !b ? null
-    : a.h2h_w !== b.h2h_w   ? '① Head-to-head record decides'
-    : a.h2h_diff !== b.h2h_diff ? '② Point differential decides'
-    : '③ Further tiebreakers needed';
-
-  return `
-    <div class="tie-card" id="tie-${idx}">
-      <div class="tie-card-header" style="border-left:4px solid ${p.pill}">
-        <div>
-          <div class="tie-wins-badge" style="color:${p.pill}">${group.wins}W</div>
-          <div class="tie-wins-label">${group.teams.length} Teams Tied</div>
-        </div>
-        <div class="tb-tag" style="color:${p.pill};border-color:${p.pill};background:${p.bg}">TIEBREAKER</div>
-      </div>
-      <table class="mini-table">
-        <thead><tr>
-          <th></th><th>Team</th>
-          <th class="num">H2H</th><th class="num">+/−</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      ${note ? `<div class="mini-tb-note">${note}</div>` : ''}
-    </div>`;
+  let html = '<div class="h2h-panel" id="'+panelId+'">';
+  html += '<div class="h2h-section-title">Results</div>';
+  if (!h2hPlayed.length) {
+    html += '<div class="no-h2h">No games played yet between these teams.</div>';
+  } else {
+    for (const g of h2hPlayed) {
+      const hw = g.winner === g.homeCode;
+      html += '<div class="h2h-game-row"><div class="h2h-teams"><span class="h2h-team">'+g.homeCode+'</span><span class="h2h-vs">vs</span><span class="h2h-team">'+g.awayCode+'</span></div><div class="h2h-score"><span class="'+(hw?'win':'lose')+'">'+g.homeScore+'</span><span style="color:var(--muted)"> &ndash; </span><span class="'+(hw?'lose':'win')+'">'+g.awayScore+'</span></div><div class="h2h-meta">R'+g.round+(g.date?' &middot; '+g.date:'')+'</div></div>';
+    }
+  }
+  if (h2hUpcoming.length) {
+    html += '<div class="h2h-section-title" style="margin-top:4px">Upcoming</div>';
+    for (const g of h2hUpcoming) {
+      html += '<div class="h2h-game-row upcoming"><div class="h2h-teams"><span class="h2h-team">'+g.homeCode+'</span><span class="h2h-vs">vs</span><span class="h2h-team">'+g.awayCode+'</span></div><div class="h2h-score" style="color:var(--muted)">&mdash;</div><div class="h2h-meta">Round '+g.round+(g.date?' &middot; '+g.date:'')+'</div></div>';
+    }
+  }
+  html += '</div>';
+  return html;
 }
 
-function buildRightPanel(tiedGroups) {
-  if (!tiedGroups.length) return `
-    <div style="color:var(--muted);font-size:13px;padding:24px 0">No ties in current standings.</div>`;
+/* ── 7. TIE CARDS ───────────────────────────── */
+function buildTieCard(group, idx, played, upcoming) {
+  const p       = TIE_PALETTE[idx % TIE_PALETTE.length];
+  const panelId = 'h2h-panel-' + idx;
+  const btnId   = 'h2h-btn-'   + idx;
 
-  const legend = `<div class="legend">
-    <div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>Playoff cutoff (Top 8)</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Tiebreaker active</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Leading in H2H</div>
-  </div>`;
+  const rows = group.teams.map((t, i) =>
+    '<tr><td class="mini-rank" style="'+(i===0?'color:'+p.pill:'')+'">'+(i+1)+'</td><td><div class="team-cell">'+initials(t.code)+'<div><div class="team-abbr">'+t.code+'</div><div class="team-full">'+t.name+'</div></div></div></td><td class="num"><span class="h2h-record"><span class="w">'+t.h2h_w+'</span><span class="l">&ndash;'+t.h2h_l+'</span></span></td><td class="num">'+fmtH2HDiff(t.h2h_diff)+'</td><td class="num" style="font-size:12px">'+fmtDiff(t.diff)+'</td></tr>'
+  ).join('');
 
-  return `
-    <div class="section-label">Tiebreakers</div>
-    ${legend}
-    ${tiedGroups.map((g, i) => buildTieCard(g, i)).join('')}`;
+  const note = resolveNote(group.teams);
+
+  return '<div class="tie-card" id="tie-'+idx+'"><div class="tie-card-header" style="border-left:4px solid '+p.pill+'"><div><div class="tie-wins-badge" style="color:'+p.pill+'">'+group.wins+'W</div><div class="tie-wins-label">'+group.teams.length+' Teams Tied</div></div><div class="tb-tag" style="color:'+p.pill+';border-color:'+p.pill+';background:'+p.bg+'">TIEBREAKER</div></div><table class="mini-table"><thead><tr><th></th><th>Team</th><th class="num">H2H</th><th class="num">H2H +/&minus;</th><th class="num">OVR +/&minus;</th></tr></thead><tbody>'+rows+'</tbody></table>'+(note?'<div class="mini-tb-note">'+note+'</div>':'')+buildH2HPanel(group, played, upcoming, panelId)+'<button class="see-results-btn" id="'+btnId+'" onclick="toggleH2H(\''+panelId+'\',\''+btnId+'\')"><span class="arr">&#9660;</span> See results &amp; upcoming games</button></div>';
 }
 
-/* ══════════════════════════════════════════════════════════
-   5. SCROLL HELPER
-══════════════════════════════════════════════════════════ */
+function buildRightPanel(tiedGroups, played, upcoming) {
+  if (!tiedGroups.length) return '<div style="color:var(--muted);font-size:13px;padding:24px 0">No ties in current standings.</div>';
+  const legend = '<div class="legend"><div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>Direct playoffs (Top '+PLAYOFF_CUTOFF+')</div><div class="legend-item"><div class="legend-dot" style="background:var(--playin)"></div>Play-in (7&ndash;'+PLAYIN_CUTOFF+')</div><div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Leading in H2H</div></div>';
+  return '<div class="section-label">Tiebreakers</div>'+legend+tiedGroups.map((g, i) => buildTieCard(g, i, played, upcoming)).join('');
+}
+
+/* ── 8. TOGGLE H2H ──────────────────────────── */
+function toggleH2H(panelId, btnId) {
+  const panel = document.getElementById(panelId);
+  const btn   = document.getElementById(btnId);
+  if (!panel || !btn) return;
+  const open = panel.classList.toggle('open');
+  btn.querySelector('.arr').innerHTML = open ? '&#9650;' : '&#9660;';
+  btn.childNodes[btn.childNodes.length-1].textContent = open ? ' Hide results & upcoming games' : ' See results & upcoming games';
+}
+
+/* ── 9. SCROLL ──────────────────────────────── */
 function scrollToTie(idx) {
-  const el = document.getElementById(`tie-${idx}`);
+  const el = document.getElementById('tie-'+idx);
   if (!el) return;
   el.scrollIntoView({ behavior:'smooth', block:'center' });
-  el.style.outline = `2px solid ${TIE_PALETTE[idx % TIE_PALETTE.length].pill}`;
+  el.style.outline = '2px solid ' + TIE_PALETTE[idx % TIE_PALETTE.length].pill;
   setTimeout(() => el.style.outline = '', 1500);
 }
 
-/* ══════════════════════════════════════════════════════════
-   6. BOOTSTRAP
-══════════════════════════════════════════════════════════ */
+/* ── 10. INIT ───────────────────────────────── */
 async function init() {
   const main = document.getElementById('main');
-  main.innerHTML = `<div class="loader"><div class="spinner"></div> Loading standings…</div>`;
-
+  main.innerHTML = '<div class="loader"><div class="spinner"></div> Loading standings&#8230;</div>';
   try {
-    const games      = await loadGames();
-    const standings  = buildStandings(games);
-    const tiedGroups = computeTiedGroups(standings, games);
-
-    main.innerHTML = `
-      <div>${buildStandingsTable(standings, tiedGroups)}</div>
-      <div class="right-panel">${buildRightPanel(tiedGroups)}</div>`;
-
-    const now = new Date();
-    document.getElementById('last-updated').textContent =
-      `Updated ${now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
-
-  } catch (err) {
-    main.innerHTML = `<div class="error-box">
-      <strong>Could not load standings.</strong><br><br>
-      ${err.message}<br><br>
-      The Euroleague API may be temporarily unavailable. Try refreshing in a moment.
-    </div>`;
+    const { played, upcoming } = await loadGames();
+    const standings  = buildStandings(played);
+    const tiedGroups = computeTiedGroups(standings, played);
+    main.innerHTML = '<div>'+buildStandingsTable(standings, tiedGroups)+'</div><div class="right-panel">'+buildRightPanel(tiedGroups, played, upcoming)+'</div>';
+    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  } catch(err) {
+    main.innerHTML = '<div class="error-box"><strong>Could not load standings.</strong><br><br>'+err.message+'<br><br>The Euroleague API may be temporarily unavailable. Try refreshing in a moment.</div>';
   }
 }
 
