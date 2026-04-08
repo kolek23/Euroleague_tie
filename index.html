@@ -8,6 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── DARK MODE (default) ── */
     :root {
       --bg:      #0b0c10;
       --surface: #13151c;
@@ -21,43 +23,84 @@
       --green:   #2ecc71;
       --red:     #e74c3c;
       --radius:  8px;
+      --zone-po-bg:    rgba(255,106,0,0.07);
+      --zone-po-hover: rgba(255,106,0,0.12);
+      --zone-pi-bg:    rgba(62,207,207,0.06);
+      --zone-pi-hover: rgba(62,207,207,0.11);
+      --hover-row:     rgba(232,181,0,0.04);
+      --mini-hover:    rgba(255,255,255,0.02);
     }
-    body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; font-size:14px; min-height:100vh; }
 
-    header { background:var(--surface); border-bottom:2px solid var(--accent); padding:0 32px; display:flex; align-items:center; justify-content:space-between; height:64px; position:sticky; top:0; z-index:100; }
+    /* ── LIGHT MODE ── */
+    body.light {
+      --bg:      #f5f5f5;
+      --surface: #ffffff;
+      --card:    #ffffff;
+      --border:  #e0e0e0;
+      --accent:  #e8480a;   /* Euroleague orange */
+      --accent2: #e8480a;
+      --playin:  #0066cc;
+      --text:    #1a1a1a;
+      --muted:   #888888;
+      --green:   #1a9e4a;
+      --red:     #cc2200;
+      --zone-po-bg:    rgba(232,72,10,0.06);
+      --zone-po-hover: rgba(232,72,10,0.11);
+      --zone-pi-bg:    rgba(0,102,204,0.05);
+      --zone-pi-hover: rgba(0,102,204,0.10);
+      --hover-row:     rgba(232,72,10,0.04);
+      --mini-hover:    rgba(0,0,0,0.02);
+    }
+
+    body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; font-size:14px; min-height:100vh; transition:background 0.2s, color 0.2s; }
+
+    /* ── Header ── */
+    header { background:var(--surface); border-bottom:3px solid var(--accent); padding:0 32px; display:flex; align-items:center; justify-content:space-between; height:64px; position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(0,0,0,0.15); }
     .logo { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; letter-spacing:0.08em; text-transform:uppercase; }
     .logo span { color:var(--accent); }
-    .header-right { display:flex; align-items:center; gap:12px; }
-    .season-badge { background:var(--accent); color:#000; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:0.12em; padding:4px 12px; border-radius:4px; }
-    .refresh-btn { background:transparent; border:1px solid var(--border); color:var(--muted); font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; padding:5px 12px; border-radius:4px; cursor:pointer; transition:border-color 0.15s,color 0.15s; }
-    .refresh-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .header-right { display:flex; align-items:center; gap:10px; }
+    .season-badge { background:var(--accent); color:#fff; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:0.12em; padding:4px 12px; border-radius:4px; }
+
+    .icon-btn {
+      background:transparent; border:1px solid var(--border); color:var(--muted);
+      font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:12px;
+      letter-spacing:0.1em; text-transform:uppercase; padding:5px 12px;
+      border-radius:4px; cursor:pointer; transition:border-color 0.15s,color 0.15s,background 0.15s;
+      display:flex; align-items:center; gap:5px;
+    }
+    .icon-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+    /* Theme toggle specific */
+    .theme-btn { font-size:15px; padding:5px 10px; letter-spacing:0; }
+
     .last-updated { font-size:11px; color:var(--muted); font-style:italic; }
 
+    /* ── Layout ── */
     main { max-width:1340px; margin:0 auto; padding:36px 24px; display:grid; grid-template-columns:1fr 494px; gap:28px; align-items:start; }
     @media (max-width:900px) { main { grid-template-columns:1fr; } }
 
     .section-label { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
     .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
 
-    .standings-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:visible; }
+    /* ── Standings table ── */
+    .standings-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:visible; box-shadow:0 1px 6px rgba(0,0,0,0.08); }
     .standings-card table { width:100%; border-collapse:collapse; }
     .standings-card thead tr { background:var(--surface); border-bottom:1px solid var(--border); }
     .standings-card th { font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); padding:12px 14px; text-align:left; }
     .standings-card th.num { text-align:right; }
     .standings-card tbody tr { border-bottom:1px solid var(--border); transition:background 0.15s; cursor:default; }
     .standings-card tbody tr:last-child { border-bottom:none; }
-    .standings-card tbody tr:hover { background:rgba(232,181,0,0.04); }
-    /* Soft zone backgrounds */
-    .zone-playoffs { background: rgba(255,106,0,0.07); }
-    .zone-playoffs:hover { background: rgba(255,106,0,0.12) !important; }
-    .zone-playin   { background: rgba(62,207,207,0.06); }
-    .zone-playin:hover   { background: rgba(62,207,207,0.11) !important; }
+    .standings-card tbody tr:hover { background:var(--hover-row); }
+    .zone-playoffs { background:var(--zone-po-bg); }
+    .zone-playoffs:hover { background:var(--zone-po-hover) !important; }
+    .zone-playin   { background:var(--zone-pi-bg); }
+    .zone-playin:hover { background:var(--zone-pi-hover) !important; }
     .standings-card td { padding:11px 14px; vertical-align:middle; }
     .standings-card td.num { text-align:right; font-variant-numeric:tabular-nums; color:var(--muted); }
 
     .rank-col { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:16px; color:var(--muted); width:32px; text-align:center !important; }
     .team-cell { display:flex; align-items:center; gap:10px; }
-    .team-initials { width:28px; height:28px; border-radius:50%; background:var(--surface); display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9px; color:var(--accent); flex-shrink:0; letter-spacing:0; }
+    .team-initials { width:28px; height:28px; border-radius:50%; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9px; color:var(--accent); flex-shrink:0; }
     .team-abbr { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:0.05em; color:var(--text); }
     .team-full { font-size:12px; color:var(--muted); font-weight:300; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
     .wins-col   { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:18px; color:var(--text); text-align:right !important; }
@@ -66,27 +109,17 @@
     .diff-neg { color:var(--red); }
 
     .tie-pill { display:inline-flex; align-items:center; background:var(--bc,rgba(232,181,0,0.12)); border:1px solid var(--pc,rgba(232,181,0,0.35)); color:var(--pc,#e8b500); font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.1em; padding:2px 7px; border-radius:20px; text-transform:uppercase; cursor:pointer; transition:filter 0.15s; }
-    .tie-pill:hover { filter:brightness(1.3); }
+    .tie-pill:hover { filter:brightness(1.2); }
 
-    /* Cutoff lines - sit ON the row below the cutoff */
+    /* Cutoff lines */
     .cutoff-playoffs td { border-top:2px solid var(--accent2) !important; position:relative; }
-    .cutoff-playoffs td:last-child { position:relative; }
-    .cutoff-playoffs td:last-child::after {
-      content:'PLAYOFFS';
-      position:absolute; top:-14px; right:8px;
-      font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:700; letter-spacing:0.15em;
-      color:var(--accent2); background:var(--card); padding:0 4px;
-    }
+    .cutoff-playoffs td:last-child::after { content:'PLAYOFFS'; position:absolute; top:-14px; right:8px; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:700; letter-spacing:0.15em; color:var(--accent2); background:var(--card); padding:0 4px; }
     .cutoff-playin td { border-top:2px solid var(--playin) !important; position:relative; }
-    .cutoff-playin td:last-child::after {
-      content:'PLAY-IN';
-      position:absolute; top:-14px; right:8px;
-      font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:700; letter-spacing:0.15em;
-      color:var(--playin); background:var(--card); padding:0 4px;
-    }
+    .cutoff-playin td:last-child::after { content:'PLAY-IN'; position:absolute; top:-14px; right:8px; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:700; letter-spacing:0.15em; color:var(--playin); background:var(--card); padding:0 4px; }
 
+    /* ── Right panel ── */
     .right-panel { display:flex; flex-direction:column; gap:24px; }
-    .tie-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    .tie-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; box-shadow:0 1px 6px rgba(0,0,0,0.08); }
     .tie-card-header { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; }
     .tie-wins-badge { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; line-height:1; }
     .tie-wins-label { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-top:2px; }
@@ -98,7 +131,7 @@
     .mini-table th.num { text-align:right; }
     .mini-table tbody tr { border-bottom:1px solid var(--border); transition:background 0.12s; }
     .mini-table tbody tr:last-child { border-bottom:none; }
-    .mini-table tbody tr:hover { background:rgba(255,255,255,0.02); }
+    .mini-table tbody tr:hover { background:var(--mini-hover); }
     .mini-table td { padding:10px 14px; }
     .mini-table td.num { text-align:right; font-variant-numeric:tabular-nums; }
     .mini-rank { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; width:24px; color:var(--muted); }
@@ -111,18 +144,11 @@
     .mini-tb-note { padding:8px 14px; font-size:11px; color:var(--muted); border-top:1px solid var(--border); font-style:italic; }
 
     /* See results button */
-    .see-results-btn {
-      display:flex; align-items:center; justify-content:center; gap:6px;
-      width:100%; padding:9px 14px;
-      background:transparent; border:none; border-top:1px solid var(--border);
-      color:var(--muted); font-family:'Barlow Condensed',sans-serif;
-      font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase;
-      cursor:pointer; transition:background 0.15s,color 0.15s;
-    }
-    .see-results-btn:hover { background:rgba(255,255,255,0.03); color:var(--text); }
+    .see-results-btn { display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:9px 14px; background:transparent; border:none; border-top:1px solid var(--border); color:var(--muted); font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; cursor:pointer; transition:background 0.15s,color 0.15s; }
+    .see-results-btn:hover { background:var(--mini-hover); color:var(--text); }
     .see-results-btn .arr { transition:transform 0.2s; display:inline-block; }
 
-    /* Expandable H2H panel */
+    /* H2H panel */
     .h2h-panel { display:none; border-top:1px solid var(--border); }
     .h2h-panel.open { display:block; }
     .h2h-section-title { font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); padding:10px 14px 4px; }
@@ -131,7 +157,7 @@
     .h2h-game-row.upcoming { color:var(--muted); font-style:italic; }
     .h2h-teams { display:flex; align-items:center; gap:6px; flex:1; min-width:0; }
     .h2h-team { font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:13px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px; }
-    .h2h-vs { color:var(--muted); font-size:11px; }
+    .h2h-vs   { color:var(--muted); font-size:11px; }
     .h2h-score { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; white-space:nowrap; min-width:56px; text-align:center; }
     .h2h-score .win  { color:var(--green); }
     .h2h-score .lose { color:var(--red); }
@@ -154,7 +180,8 @@
   <div class="logo">Euro<span>League</span> Tiebreaker</div>
   <div class="header-right">
     <span class="last-updated" id="last-updated"></span>
-    <button class="refresh-btn" onclick="init()">&#8635; Refresh</button>
+    <button class="icon-btn theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle light/dark mode">☀️</button>
+    <button class="icon-btn" onclick="init()">&#8635; Refresh</button>
     <div class="season-badge">2025&#8211;26</div>
   </div>
 </header>
@@ -166,12 +193,12 @@
 <script>
 'use strict';
 
-const SEASON           = 'E2025';
-const RESULTS_URL      = 'https://api-live.euroleague.net/v1/results?seasonCode='  + SEASON;
-const SCHEDULES_URL    = 'https://api-live.euroleague.net/v1/schedules?seasonCode=' + SEASON;
+const SEASON        = 'E2025';
+const RESULTS_URL   = 'https://api-live.euroleague.net/v1/results?seasonCode='  + SEASON;
+const SCHEDULES_URL = 'https://api-live.euroleague.net/v1/schedules?seasonCode=' + SEASON;
 const proxy = url => 'https://corsproxy.io/?url=' + encodeURIComponent(url);
-const PLAYOFF_CUTOFF  = 6;   // after rank 6: direct playoff line
-const PLAYIN_CUTOFF   = 10;  // after rank 10: play-in line
+const PLAYOFF_CUTOFF = 6;
+const PLAYIN_CUTOFF  = 10;
 
 const TIE_PALETTE = [
   { pill:'#e8b500', bg:'rgba(232,181,0,0.13)'   },
@@ -183,9 +210,19 @@ const TIE_PALETTE = [
   { pill:'#60aaff', bg:'rgba(96,170,255,0.13)'  },
 ];
 
-/* ── 1. FETCH ───────────────────────────────── */
+/* ── THEME TOGGLE ── */
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('theme-btn').textContent = isLight ? '🌙' : '☀️';
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+// Restore saved preference
+if (localStorage.getItem('theme') === 'light') {
+  document.body.classList.add('light');
+  document.getElementById('theme-btn').textContent = '🌙';
+}
 
-// Fetch one URL, fall back to CORS proxy if direct fails
+/* ── 1. FETCH ── */
 async function fetchXML(url) {
   let text;
   try {
@@ -194,11 +231,11 @@ async function fetchXML(url) {
     text = await r.text();
   } catch(_) {
     const r = await fetch(proxy(url));
-    if (!r.ok) throw new Error('API error ' + r.status + ' for ' + url);
+    if (!r.ok) throw new Error('API error ' + r.status);
     text = await r.text();
   }
   const xml = new DOMParser().parseFromString(text, 'application/xml');
-  if (xml.querySelector('parsererror')) throw new Error('XML parse error for ' + url);
+  if (xml.querySelector('parsererror')) throw new Error('XML parse error');
   return xml;
 }
 
@@ -214,41 +251,27 @@ function parseGame(g, requirePlayed) {
   if (isPlayed) {
     const hs = parseInt(get('homescore'), 10), as_ = parseInt(get('awayscore'), 10);
     if (isNaN(hs) || isNaN(as_)) return null;
-    return { id:get('gamecode'), round, date, homeCode, homeName:get('hometeam'), homeScore:hs, awayCode, awayName:get('awayteam'), awayScore:as_, winner: hs>as_ ? homeCode : awayCode, diff:Math.abs(hs-as_) };
+    return { id:get('gamecode'), round, date, homeCode, homeName:get('hometeam'), homeScore:hs, awayCode, awayName:get('awayteam'), awayScore:as_, winner:hs>as_?homeCode:awayCode, diff:Math.abs(hs-as_) };
   }
   return { id:get('gamecode'), round, date, homeCode, homeName:get('hometeam'), awayCode, awayName:get('awayteam') };
 }
 
 async function loadGames() {
-  // Fetch results and schedule in parallel
-  // /results uses <game> elements, /schedules uses <item> elements
-  const [resultsXml, schedulesXml] = await Promise.all([
-    fetchXML(RESULTS_URL),
-    fetchXML(SCHEDULES_URL),
-  ]);
-
+  const [resultsXml, schedulesXml] = await Promise.all([fetchXML(RESULTS_URL), fetchXML(SCHEDULES_URL)]);
   const played = [];
   for (const g of resultsXml.querySelectorAll('game')) {
-    const parsed = parseGame(g, true);
-    if (parsed) played.push(parsed);
+    const p = parseGame(g, true); if (p) played.push(p);
   }
-
-  // Build a set of already-played game IDs so we don't show them as upcoming
   const playedIds = new Set(played.map(g => g.id));
   const upcoming  = [];
-
-  // Schedules uses <item> tags and has both played + unplayed entries
   for (const g of schedulesXml.querySelectorAll('item')) {
-    const parsed = parseGame(g, false);  // false = want unplayed only
-    if (parsed && !playedIds.has(parsed.id)) {
-      upcoming.push(parsed);
-    }
+    const p = parseGame(g, false);
+    if (p && !playedIds.has(p.id)) upcoming.push(p);
   }
-
   return { played, upcoming };
 }
 
-/* ── 2. STANDINGS ───────────────────────────── */
+/* ── 2. STANDINGS (basic, wins + overall diff) ── */
 function buildStandings(played) {
   const teams = {};
   const ensure = (code, name) => { if (!teams[code]) teams[code] = { code, name, wins:0, losses:0, pf:0, pa:0 }; };
@@ -259,10 +282,12 @@ function buildStandings(played) {
     if (g.winner === g.homeCode) { teams[g.homeCode].wins++; teams[g.awayCode].losses++; }
     else { teams[g.awayCode].wins++; teams[g.homeCode].losses++; }
   }
-  return Object.values(teams).sort((a,b) => { const wd=b.wins-a.wins; return wd||((b.pf-b.pa)-(a.pf-a.pa)); }).map((t,i) => ({...t, rank:i+1, diff:t.pf-t.pa}));
+  return Object.values(teams)
+    .map(t => ({ ...t, diff: t.pf - t.pa }))
+    .sort((a,b) => (b.wins - a.wins) || (b.diff - a.diff));
 }
 
-/* ── 3. TIEBREAKER ──────────────────────────── */
+/* ── 3. TIEBREAKER LOGIC ── */
 function computeTiedGroups(standings, played) {
   const byWins = {};
   for (const t of standings) (byWins[t.wins] = byWins[t.wins] || []).push(t);
@@ -280,65 +305,87 @@ function computeTiedGroups(standings, played) {
       if (g.winner === g.homeCode) { h2h[g.homeCode].h2h_w++; h2h[g.awayCode].h2h_l++; }
       else { h2h[g.awayCode].h2h_w++; h2h[g.homeCode].h2h_l++; }
     }
-    const ranked = group.slice().sort((a, b) => {
+    const ranked = group.slice().sort((a,b) => {
       const wa = h2h[a.code], wb = h2h[b.code];
-      if (wb.h2h_w    !== wa.h2h_w)    return wb.h2h_w    - wa.h2h_w;    // rule 1
-      if (wb.h2h_diff !== wa.h2h_diff) return wb.h2h_diff - wa.h2h_diff; // rule 2
-      return b.diff - a.diff;                                              // rule 3
+      if (wb.h2h_w    !== wa.h2h_w)    return wb.h2h_w    - wa.h2h_w;
+      if (wb.h2h_diff !== wa.h2h_diff) return wb.h2h_diff - wa.h2h_diff;
+      return b.diff - a.diff;
     });
-    tiedGroups.push({ wins: parseInt(wins), teams: ranked.map(t => ({...t, ...h2h[t.code]})) });
+    tiedGroups.push({ wins:parseInt(wins), teams:ranked.map(t => ({...t, ...h2h[t.code]})) });
   }
   tiedGroups.sort((a,b) => b.wins - a.wins);
   return tiedGroups;
 }
 
-/* ── 4. FORMAT HELPERS ──────────────────────── */
+/* ── 4. TIEBREAKER-AWARE FINAL STANDINGS ──
+   Re-sort standings so teams tied on wins appear in tiebreaker order.      */
+function applyTiebreakersToStandings(standings, tiedGroups) {
+  // Build a map: team code → tiebreaker rank within its group
+  const tbRank = {};        // code → { groupOffset, posInGroup }
+  const tbGroupIdx = {};    // code → tiedGroups index (for pill colour)
+
+  tiedGroups.forEach((grp, gi) => {
+    grp.teams.forEach((t, pi) => {
+      tbRank[t.code]     = pi;   // 0 = first (best) within tied group
+      tbGroupIdx[t.code] = gi;
+    });
+  });
+
+  // Re-sort: primary key = wins desc, secondary = tiebreaker position within same-wins group, tertiary = overall diff
+  const sorted = standings.slice().sort((a,b) => {
+    if (b.wins !== a.wins) return b.wins - a.wins;
+    // Both in same tied group → use tiebreaker order
+    if (tbGroupIdx[a.code] !== undefined && tbGroupIdx[a.code] === tbGroupIdx[b.code]) {
+      return tbRank[a.code] - tbRank[b.code];
+    }
+    return b.diff - a.diff;
+  });
+
+  return sorted.map((t, i) => ({ ...t, rank: i + 1, tieGroupIdx: tbGroupIdx[t.code] }));
+}
+
+/* ── 5. RENDER HELPERS ── */
 const fmtDiff    = n => n>0 ? '<span class="diff-pos">+'+n+'</span>' : n<0 ? '<span class="diff-neg">'+n+'</span>' : '<span style="color:var(--muted)">0</span>';
 const fmtH2HDiff = n => n>0 ? '<span class="h2h-diff-pos">+'+n+'</span>' : n<0 ? '<span class="h2h-diff-neg">'+n+'</span>' : '<span class="h2h-diff-neu">0</span>';
 const initials   = code => '<div class="team-initials">'+code.slice(0,3)+'</div>';
 
 function resolveNote(teams) {
   if (teams.length < 2) return null;
-  const [a, b] = teams;
+  const [a,b] = teams;
   if (a.h2h_w    !== b.h2h_w)    return '&#9312; Head-to-head record decides';
   if (a.h2h_diff !== b.h2h_diff) return '&#9313; H2H point differential decides';
   if (a.diff     !== b.diff)     return '&#9314; Overall point differential decides';
   return '&#9315; Further tiebreakers needed';
 }
 
-/* ── 5. STANDINGS TABLE ─────────────────────── */
-function buildStandingsTable(standings, tiedGroups) {
-  const tieMap = {};
-  tiedGroups.forEach((g, i) => g.teams.forEach(t => { tieMap[t.code] = i; }));
-
+/* ── 6. STANDINGS TABLE ── */
+function buildStandingsTable(standings) {
   const rows = standings.map(t => {
-    const idx = tieMap[t.code];
+    const idx = t.tieGroupIdx;
     let pill = '';
     if (idx !== undefined) {
       const p = TIE_PALETTE[idx % TIE_PALETTE.length];
       pill = '<span class="tie-pill" style="--pc:'+p.pill+';--bc:'+p.bg+'" onclick="scrollToTie('+idx+')" title="View tiebreaker">TIE</span>';
     }
-    const cutoffCls = t.rank === PLAYOFF_CUTOFF + 1 ? 'cutoff-playoffs' : t.rank === PLAYIN_CUTOFF + 1 ? 'cutoff-playin' : '';
+    const cutoffCls = t.rank === PLAYOFF_CUTOFF+1 ? 'cutoff-playoffs' : t.rank === PLAYIN_CUTOFF+1 ? 'cutoff-playin' : '';
     const zoneCls   = t.rank <= PLAYOFF_CUTOFF ? 'zone-playoffs' : t.rank <= PLAYIN_CUTOFF ? 'zone-playin' : '';
-    const cls = (cutoffCls + ' ' + zoneCls).trim();
+    const cls = (cutoffCls+' '+zoneCls).trim();
     return '<tr class="'+cls+'"><td class="rank-col">'+t.rank+'</td><td><div class="team-cell">'+initials(t.code)+'<div><div class="team-abbr">'+t.code+'</div><div class="team-full">'+t.name+'</div></div></div></td><td class="wins-col">'+t.wins+'</td><td class="losses-col">'+t.losses+'</td><td class="num">'+t.pf+'</td><td class="num">'+t.pa+'</td><td class="num">'+fmtDiff(t.diff)+'</td><td>'+pill+'</td></tr>';
   }).join('');
-
   return '<div class="section-label">Full Standings</div><div class="standings-card"><table><thead><tr><th></th><th>Team</th><th class="num">W</th><th class="num">L</th><th class="num">PF</th><th class="num">PA</th><th class="num">DIFF</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
-/* ── 6. H2H EXPAND PANEL ────────────────────── */
+/* ── 7. H2H PANEL ── */
 function buildH2HPanel(group, played, upcoming, panelId) {
-  const codesSet = new Set(group.teams.map(t => t.code));
+  const codesSet    = new Set(group.teams.map(t => t.code));
   const h2hPlayed   = played.filter(g   => codesSet.has(g.homeCode) && codesSet.has(g.awayCode)).sort((a,b) => b.round - a.round);
   const h2hUpcoming = upcoming.filter(g => codesSet.has(g.homeCode) && codesSet.has(g.awayCode)).sort((a,b) => a.round - b.round);
 
   let html = '<div class="h2h-panel" id="'+panelId+'">';
   if (h2hUpcoming.length) {
     html += '<div class="h2h-section-title">Upcoming</div>';
-    for (const g of h2hUpcoming) {
+    for (const g of h2hUpcoming)
       html += '<div class="h2h-game-row upcoming"><div class="h2h-teams"><span class="h2h-team">'+g.homeName+'</span><span class="h2h-vs">vs</span><span class="h2h-team">'+g.awayName+'</span></div><div class="h2h-score" style="color:var(--muted)">&mdash;</div><div class="h2h-meta">Round '+g.round+(g.date?' &middot; '+g.date:'')+'</div></div>';
-    }
   }
   html += '<div class="h2h-section-title" style="margin-top:4px">Results</div>';
   if (!h2hPlayed.length) {
@@ -349,32 +396,28 @@ function buildH2HPanel(group, played, upcoming, panelId) {
       html += '<div class="h2h-game-row"><div class="h2h-teams"><span class="h2h-team">'+g.homeName+'</span><span class="h2h-vs">vs</span><span class="h2h-team">'+g.awayName+'</span></div><div class="h2h-score"><span class="'+(hw?'win':'lose')+'">'+g.homeScore+'</span><span style="color:var(--muted)"> &ndash; </span><span class="'+(hw?'lose':'win')+'">'+g.awayScore+'</span></div><div class="h2h-meta">R'+g.round+(g.date?' &middot; '+g.date:'')+'</div></div>';
     }
   }
-  html += '</div>';
-  return html;
+  return html + '</div>';
 }
 
-/* ── 7. TIE CARDS ───────────────────────────── */
+/* ── 8. TIE CARDS ── */
 function buildTieCard(group, idx, played, upcoming) {
   const p       = TIE_PALETTE[idx % TIE_PALETTE.length];
-  const panelId = 'h2h-panel-' + idx;
-  const btnId   = 'h2h-btn-'   + idx;
-
-  const rows = group.teams.map((t, i) =>
+  const panelId = 'h2h-panel-'+idx;
+  const btnId   = 'h2h-btn-'+idx;
+  const rows    = group.teams.map((t,i) =>
     '<tr><td class="mini-rank" style="'+(i===0?'color:'+p.pill:'')+'">'+(i+1)+'</td><td><div class="team-cell">'+initials(t.code)+'<div><div class="team-abbr">'+t.code+'</div><div class="team-full">'+t.name+'</div></div></div></td><td class="num"><span class="h2h-record"><span class="w">'+t.h2h_w+'</span><span class="l">&ndash;'+t.h2h_l+'</span></span></td><td class="num">'+fmtH2HDiff(t.h2h_diff)+'</td><td class="num" style="font-size:12px">'+fmtDiff(t.diff)+'</td></tr>'
   ).join('');
-
   const note = resolveNote(group.teams);
-
-  return '<div class="tie-card" id="tie-'+idx+'"><div class="tie-card-header" style="border-left:4px solid '+p.pill+'"><div><div class="tie-wins-badge" style="color:'+p.pill+'">'+group.wins+'W</div><div class="tie-wins-label">'+group.teams.length+' Teams Tied</div></div><div class="tb-tag" style="color:'+p.pill+';border-color:'+p.pill+';background:'+p.bg+'">TIEBREAKER</div></div><table class="mini-table"><thead><tr><th></th><th>Team</th><th class="num">H2H</th><th class="num">H2H +/&minus;</th><th class="num">OVR +/&minus;</th></tr></thead><tbody>'+rows+'</tbody></table>'+(note?'<div class="mini-tb-note">'+note+'</div>':'')+buildH2HPanel(group, played, upcoming, panelId)+'<button class="see-results-btn" id="'+btnId+'" onclick="toggleH2H(\''+panelId+'\',\''+btnId+'\')"><span class="arr">&#9660;</span> See results &amp; upcoming games</button></div>';
+  return '<div class="tie-card" id="tie-'+idx+'"><div class="tie-card-header" style="border-left:4px solid '+p.pill+'"><div><div class="tie-wins-badge" style="color:'+p.pill+'">'+group.wins+'W</div><div class="tie-wins-label">'+group.teams.length+' Teams Tied</div></div><div class="tb-tag" style="color:'+p.pill+';border-color:'+p.pill+';background:'+p.bg+'">TIEBREAKER</div></div><table class="mini-table"><thead><tr><th></th><th>Team</th><th class="num">H2H</th><th class="num">H2H +/&minus;</th><th class="num">OVR +/&minus;</th></tr></thead><tbody>'+rows+'</tbody></table>'+(note?'<div class="mini-tb-note">'+note+'</div>':'')+buildH2HPanel(group,played,upcoming,panelId)+'<button class="see-results-btn" id="'+btnId+'" onclick="toggleH2H(\''+panelId+'\',\''+btnId+'\')"><span class="arr">&#9660;</span> See results &amp; upcoming games</button></div>';
 }
 
 function buildRightPanel(tiedGroups, played, upcoming) {
   if (!tiedGroups.length) return '<div style="color:var(--muted);font-size:13px;padding:24px 0">No ties in current standings.</div>';
   const legend = '<div class="legend"><div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>Direct playoffs (Top '+PLAYOFF_CUTOFF+')</div><div class="legend-item"><div class="legend-dot" style="background:var(--playin)"></div>Play-in (7&ndash;'+PLAYIN_CUTOFF+')</div><div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Leading in H2H</div></div>';
-  return '<div class="section-label">Tiebreakers</div>'+legend+tiedGroups.map((g, i) => buildTieCard(g, i, played, upcoming)).join('');
+  return '<div class="section-label">Tiebreakers</div>'+legend+tiedGroups.map((g,i) => buildTieCard(g,i,played,upcoming)).join('');
 }
 
-/* ── 8. TOGGLE H2H ──────────────────────────── */
+/* ── 9. TOGGLE H2H ── */
 function toggleH2H(panelId, btnId) {
   const panel = document.getElementById(panelId);
   const btn   = document.getElementById(btnId);
@@ -384,25 +427,27 @@ function toggleH2H(panelId, btnId) {
   btn.childNodes[btn.childNodes.length-1].textContent = open ? ' Hide results & upcoming games' : ' See results & upcoming games';
 }
 
-/* ── 9. SCROLL ──────────────────────────────── */
+/* ── 10. SCROLL ── */
 function scrollToTie(idx) {
   const el = document.getElementById('tie-'+idx);
   if (!el) return;
   el.scrollIntoView({ behavior:'smooth', block:'center' });
-  el.style.outline = '2px solid ' + TIE_PALETTE[idx % TIE_PALETTE.length].pill;
-  setTimeout(() => el.style.outline = '', 1500);
+  el.style.outline = '2px solid '+TIE_PALETTE[idx%TIE_PALETTE.length].pill;
+  setTimeout(() => el.style.outline='', 1500);
 }
 
-/* ── 10. INIT ───────────────────────────────── */
+/* ── 11. INIT ── */
 async function init() {
   const main = document.getElementById('main');
   main.innerHTML = '<div class="loader"><div class="spinner"></div> Loading standings&#8230;</div>';
   try {
     const { played, upcoming } = await loadGames();
-    const standings  = buildStandings(played);
-    const tiedGroups = computeTiedGroups(standings, played);
-    main.innerHTML = '<div>'+buildStandingsTable(standings, tiedGroups)+'</div><div class="right-panel">'+buildRightPanel(tiedGroups, played, upcoming)+'</div>';
-    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    const rawStandings = buildStandings(played);
+    const tiedGroups   = computeTiedGroups(rawStandings, played);
+    const standings    = applyTiebreakersToStandings(rawStandings, tiedGroups);
+
+    main.innerHTML = '<div>'+buildStandingsTable(standings)+'</div><div class="right-panel">'+buildRightPanel(tiedGroups,played,upcoming)+'</div>';
+    document.getElementById('last-updated').textContent = 'Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   } catch(err) {
     main.innerHTML = '<div class="error-box"><strong>Could not load standings.</strong><br><br>'+err.message+'<br><br>The Euroleague API may be temporarily unavailable. Try refreshing in a moment.</div>';
   }
