@@ -194,9 +194,8 @@
 'use strict';
 
 const SEASON        = 'E2026';
-const RESULTS_URL   = 'https://api-live.euroleague.net/v1/results?seasonCode='  + SEASON;
-const SCHEDULES_URL = 'https://api-live.euroleague.net/v1/schedules?seasonCode=' + SEASON;
-const proxy = url => 'https://corsproxy.io/?url=' + encodeURIComponent(url);
+const GAMES_URL   = 'https://api-live.euroleague.net/v2/competitions/E/seasons/' + SEASON + '/games';
+const RESULTS_URL = 'https://api-live.euroleague.net/v1/results?seasonCode=' + SEASON;  // fallback (played games only)
 const PLAYOFF_CUTOFF = 6;
 const PLAYIN_CUTOFF  = 10;
 
@@ -222,53 +221,60 @@ if (localStorage.getItem('theme') === 'light') {
   document.getElementById('theme-btn').textContent = '🌙';
 }
 
-/* ── 1. FETCH ── */
-async function fetchXML(url) {
-  let text;
-  try {
-    const r = await fetch(url, { headers:{ Accept:'application/xml' } });
-    if (!r.ok) throw new Error('direct failed');
-    text = await r.text();
-  } catch(_) {
-    const r = await fetch(proxy(url));
-    if (!r.ok) throw new Error('API error ' + r.status);
-    text = await r.text();
+/* ── 1. FETCH ──
+   Primary source: v2 JSON games feed (CORS-enabled, played + upcoming in one call).
+   Fallback: v1 XML results feed (CORS-enabled, played games only).
+   Note: v1 /schedules does NOT send CORS headers and corsproxy.io now requires an API key,
+   which is why the old version failed with "API error 401".                              */
+const fmtDate = iso => {
+  const d = new Date(iso);
+  return isNaN(d) ? '' : d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+};
+
+async function loadGamesV2() {
+  const r = await fetch(GAMES_URL, { headers:{ Accept:'application/json' } });
+  if (!r.ok) throw new Error('Games API error ' + r.status);
+  const json = await r.json();
+  const played = [], upcoming = [];
+  for (const g of (json.data || [])) {
+    if (g.phaseType && g.phaseType.code !== 'RS') continue;          // regular season only
+    const h = g.local && g.local.club, a = g.road && g.road.club;
+    if (!h || !a || h.isVirtual || a.isVirtual) continue;
+    const base = { id:g.identifier, round:g.round || 0, date:fmtDate(g.utcDate || g.date),
+                   homeCode:h.code, homeName:h.name, awayCode:a.code, awayName:a.name };
+    if (g.played) {
+      const hs = g.local.score, as_ = g.road.score;
+      if (typeof hs !== 'number' || typeof as_ !== 'number') continue;
+      played.push({ ...base, homeScore:hs, awayScore:as_, winner:hs>as_?h.code:a.code, diff:Math.abs(hs-as_) });
+    } else {
+      upcoming.push(base);
+    }
   }
-  const xml = new DOMParser().parseFromString(text, 'application/xml');
-  if (xml.querySelector('parsererror')) throw new Error('XML parse error');
-  return xml;
+  return { played, upcoming };
 }
 
-function parseGame(g, requirePlayed) {
-  const get = tag => { const el = g.querySelector(tag); return el ? el.textContent.trim() : ''; };
-  const homeCode = get('homecode'), awayCode = get('awaycode');
-  if (!homeCode || !awayCode) return null;
-  const round    = parseInt(get('gameday') || get('gamenumber'), 10) || 0;
-  const date     = get('date');
-  const isPlayed = get('played').toLowerCase() === 'true';
-  if (requirePlayed && !isPlayed) return null;
-  if (!requirePlayed && isPlayed) return null;
-  if (isPlayed) {
-    const hs = parseInt(get('homescore'), 10), as_ = parseInt(get('awayscore'), 10);
-    if (isNaN(hs) || isNaN(as_)) return null;
-    return { id:get('gamecode'), round, date, homeCode, homeName:get('hometeam'), homeScore:hs, awayCode, awayName:get('awayteam'), awayScore:as_, winner:hs>as_?homeCode:awayCode, diff:Math.abs(hs-as_) };
+async function loadGamesV1Fallback() {
+  const r = await fetch(RESULTS_URL, { headers:{ Accept:'application/xml' } });
+  if (!r.ok) throw new Error('Results API error ' + r.status);
+  const xml = new DOMParser().parseFromString(await r.text(), 'application/xml');
+  if (xml.querySelector('parsererror')) throw new Error('XML parse error');
+  const played = [];
+  for (const g of xml.querySelectorAll('game')) {
+    const get = tag => { const el = g.querySelector(tag); return el ? el.textContent.trim() : ''; };
+    if (get('played').toLowerCase() !== 'true' || (get('round') && get('round') !== 'RS')) continue;
+    const hs = parseInt(get('homescore'),10), as_ = parseInt(get('awayscore'),10);
+    const homeCode = get('homecode'), awayCode = get('awaycode');
+    if (!homeCode || !awayCode || isNaN(hs) || isNaN(as_)) continue;
+    played.push({ id:get('gamecode'), round:parseInt(get('gameday'),10)||0, date:get('date'),
+      homeCode, homeName:get('hometeam'), homeScore:hs, awayCode, awayName:get('awayteam'), awayScore:as_,
+      winner:hs>as_?homeCode:awayCode, diff:Math.abs(hs-as_) });
   }
-  return { id:get('gamecode'), round, date, homeCode, homeName:get('hometeam'), awayCode, awayName:get('awayteam') };
+  return { played, upcoming:[] };
 }
 
 async function loadGames() {
-  const [resultsXml, schedulesXml] = await Promise.all([fetchXML(RESULTS_URL), fetchXML(SCHEDULES_URL)]);
-  const played = [];
-  for (const g of resultsXml.querySelectorAll('game')) {
-    const p = parseGame(g, true); if (p) played.push(p);
-  }
-  const playedIds = new Set(played.map(g => g.id));
-  const upcoming  = [];
-  for (const g of schedulesXml.querySelectorAll('item')) {
-    const p = parseGame(g, false);
-    if (p && !playedIds.has(p.id)) upcoming.push(p);
-  }
-  return { played, upcoming };
+  try { return await loadGamesV2(); }
+  catch (e) { console.warn('v2 games feed failed, falling back to v1 results:', e); return loadGamesV1Fallback(); }
 }
 
 /* ── 2. STANDINGS (basic, wins + overall diff) ── */
@@ -442,6 +448,11 @@ async function init() {
   main.innerHTML = '<div class="loader"><div class="spinner"></div> Loading standings&#8230;</div>';
   try {
     const { played, upcoming } = await loadGames();
+    if (!played.length) {
+      const next = upcoming.slice().sort((a,b) => a.round - b.round)[0];
+      main.innerHTML = '<div class="error-box"><strong>No games played yet in '+SEASON+'.</strong>'+(next?'<br><br>Season tips off '+next.date+' (Round '+next.round+').':'')+'</div>';
+      return;
+    }
     const rawStandings = buildStandings(played);
     const tiedGroups   = computeTiedGroups(rawStandings, played);
     const standings    = applyTiebreakersToStandings(rawStandings, tiedGroups);
