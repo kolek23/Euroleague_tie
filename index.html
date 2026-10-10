@@ -100,9 +100,11 @@
 
     .rank-col { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:16px; color:var(--muted); width:32px; text-align:center !important; }
     .team-cell { display:flex; align-items:center; gap:10px; }
-    .team-initials { width:28px; height:28px; border-radius:50%; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9px; color:var(--accent); flex-shrink:0; }
-    .team-abbr { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:0.05em; color:var(--text); }
-    .team-full { font-size:12px; color:var(--muted); font-weight:300; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
+    .team-logo { width:28px; height:28px; object-fit:contain; flex-shrink:0; }
+    .team-name { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:0.03em; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px; }
+    body.light .team-name { color:var(--text); }
+    .mini-table .team-name { max-width:150px; }
+    body:not(.light) .team-logo { filter:drop-shadow(0 0 1px rgba(255,255,255,0.55)); }
     .wins-col   { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:18px; color:var(--text); text-align:right !important; }
     .losses-col { font-family:'Barlow Condensed',sans-serif; font-weight:400; font-size:18px; color:var(--muted); text-align:right !important; }
     .diff-pos { color:var(--green); }
@@ -135,7 +137,7 @@
     .mini-table td { padding:10px 14px; }
     .mini-table td.num { text-align:right; font-variant-numeric:tabular-nums; }
     .mini-rank { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; width:24px; color:var(--muted); }
-    .h2h-record { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:16px; }
+    .h2h-record { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:16px; white-space:nowrap; }
     .h2h-record .w { color:var(--green); }
     .h2h-record .l { color:var(--muted); }
     .h2h-diff-pos { color:var(--green); font-size:13px; }
@@ -195,6 +197,29 @@
 
 const SEASON        = 'E2026';
 const GAMES_URL   = 'https://api-live.euroleague.net/v2/competitions/E/seasons/' + SEASON + '/games';
+/* Official club crests (from Euroleague API v2 /clubs). Refreshed at runtime from the games feed. */
+const CRESTS = {
+  IST:'https://media-cdn.cortextech.io/1dU3kpCqReRp93/1BSdBWIjCgOCxM/a844756c-a58d-4666-93b8-48f7337bc79d.png',
+  MIL:'https://media-cdn.cortextech.io/1dU3kpCqReRp93/1BSdBWIjChWbHH/5c2f0ab6-f86a-4df0-b2f3-f9ab92f7267b.png',
+  BES:'https://media-cdn.cortextech.io/1dU3kpCqReRp93/1BSdBWIjChWbHH/b05e3c54-e672-4b31-9f86-c91e9de7715c.png',
+  RED:'https://media-cdn.incrowdsports.com/d2eef4a8-62df-4fdd-9076-276004268515.png',
+  DUB:'https://media-cdn.incrowdsports.com/1efae090-16e2-4963-ae47-4b94f249c244.png',
+  BAR:'https://media-cdn.incrowdsports.com/35dfa503-e417-481f-963a-bdf6f013763e.png',
+  MUN:'https://media-cdn.incrowdsports.com/817b0e58-d595-4b09-ab0b-1e7cc26249ff.png',
+  ULK:'https://media-cdn.cortextech.io/1dU3kpCqReRp93/1BSdBWIjCiezrk/aa39750a-6203-49ee-a87d-edd0c6f0397d.png',
+  HTA:'https://media-cdn.incrowdsports.com/cbb1c3ad-03d5-426a-b5ef-2832a4eee484.png',
+  BAS:'https://media-cdn.cortextech.io/cbc49cb0-99ce-4462-bdb7-56983ee03cf4.png',
+  ASV:'https://media-cdn.incrowdsports.com/e33c6d1a-95ca-4dbc-b8cb-0201812104cc.png',
+  TEL:'https://media-cdn.cortextech.io/1b533342-78f5-4932-b714-a7d80b5826b5.png',
+  OLY:'https://media-cdn.incrowdsports.com/789423ac-3cdf-4b89-b11c-b458aa5f59a6.png',
+  PAN:'https://media-cdn.incrowdsports.com/e3dff28a-9ec6-4faf-9d96-ecbc68f75780.png',
+  PRS:'https://media-cdn.incrowdsports.com/a033e5b3-0de7-48a3-98d9-d9a4b9df1f39.png',
+  PAR:'https://media-cdn.incrowdsports.com/2681304e-77dd-4331-88b1-683078c0fb49.png',
+  MAD:'https://media-cdn.incrowdsports.com/371b0d9b-9250-4c09-bda7-0686cf024657.png',
+  PAM:'https://media-cdn.cortextech.io/1dU3kpCqReRp93/1BSdBWIjChWbHL/bc3e00b2-fea4-40be-a7ec-1e633129bde3.png',
+  VIR:'https://media-cdn.cortextech.io/1dU3kpCqReRp93/1BSdBWIjCiezvk/a92d4c3b-9f9c-4163-8a10-bcf8fc15893e.png',
+  ZAL:'https://media-cdn.incrowdsports.com/0aa09358-3847-4c4e-b228-3582ee4e536d.png'
+};
 const RESULTS_URL = 'https://api-live.euroleague.net/v1/results?seasonCode=' + SEASON;  // fallback (played games only)
 const PLAYOFF_CUTOFF = 6;
 const PLAYIN_CUTOFF  = 10;
@@ -240,6 +265,7 @@ async function loadGamesV2() {
     if (g.phaseType && g.phaseType.code !== 'RS') continue;          // regular season only
     const h = g.local && g.local.club, a = g.road && g.road.club;
     if (!h || !a || h.isVirtual || a.isVirtual) continue;
+    for (const c of [h, a]) if (c.images && c.images.crest) CRESTS[c.code] = c.images.crest;
     const base = { id:g.identifier, round:g.round || 0, date:fmtDate(g.utcDate || g.date),
                    homeCode:h.code, homeName:h.name, awayCode:a.code, awayName:a.name };
     if (g.played) {
@@ -353,7 +379,10 @@ function applyTiebreakersToStandings(standings, tiedGroups) {
 /* ── 5. RENDER HELPERS ── */
 const fmtDiff    = n => n>0 ? '<span class="diff-pos">+'+n+'</span>' : n<0 ? '<span class="diff-neg">'+n+'</span>' : '<span style="color:var(--muted)">0</span>';
 const fmtH2HDiff = n => n>0 ? '<span class="h2h-diff-pos">+'+n+'</span>' : n<0 ? '<span class="h2h-diff-neg">'+n+'</span>' : '<span class="h2h-diff-neu">0</span>';
-const initials   = code => '<div class="team-initials">'+code.slice(0,3)+'</div>';
+const teamLogo   = code => CRESTS[code]
+  ? '<img class="team-logo" src="'+CRESTS[code]+'" alt="'+code+'" loading="lazy" onerror="this.style.visibility=\'hidden\'">'
+  : '<span class="team-logo"></span>';
+const teamCell   = t => '<div class="team-cell">'+teamLogo(t.code)+'<div class="team-name" title="'+t.name+'">'+t.name+'</div></div>';
 
 function resolveNote(teams) {
   if (teams.length < 2) return null;
@@ -376,7 +405,7 @@ function buildStandingsTable(standings) {
     const cutoffCls = t.rank === PLAYOFF_CUTOFF+1 ? 'cutoff-playoffs' : t.rank === PLAYIN_CUTOFF+1 ? 'cutoff-playin' : '';
     const zoneCls   = t.rank <= PLAYOFF_CUTOFF ? 'zone-playoffs' : t.rank <= PLAYIN_CUTOFF ? 'zone-playin' : '';
     const cls = (cutoffCls+' '+zoneCls).trim();
-    return '<tr class="'+cls+'"><td class="rank-col">'+t.rank+'</td><td><div class="team-cell">'+initials(t.code)+'<div><div class="team-abbr">'+t.code+'</div><div class="team-full">'+t.name+'</div></div></div></td><td class="wins-col">'+t.wins+'</td><td class="losses-col">'+t.losses+'</td><td class="num">'+t.pf+'</td><td class="num">'+t.pa+'</td><td class="num">'+fmtDiff(t.diff)+'</td><td>'+pill+'</td></tr>';
+    return '<tr class="'+cls+'"><td class="rank-col">'+t.rank+'</td><td>'+teamCell(t)+'</td><td class="wins-col">'+t.wins+'</td><td class="losses-col">'+t.losses+'</td><td class="num">'+t.pf+'</td><td class="num">'+t.pa+'</td><td class="num">'+fmtDiff(t.diff)+'</td><td>'+pill+'</td></tr>';
   }).join('');
   return '<div class="section-label">Full Standings</div><div class="standings-card"><table><thead><tr><th></th><th>Team</th><th class="num">W</th><th class="num">L</th><th class="num">PF</th><th class="num">PA</th><th class="num">DIFF</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
@@ -411,7 +440,7 @@ function buildTieCard(group, idx, played, upcoming) {
   const panelId = 'h2h-panel-'+idx;
   const btnId   = 'h2h-btn-'+idx;
   const rows    = group.teams.map((t,i) =>
-    '<tr><td class="mini-rank" style="'+(i===0?'color:'+p.pill:'')+'">'+(i+1)+'</td><td><div class="team-cell">'+initials(t.code)+'<div><div class="team-abbr">'+t.code+'</div><div class="team-full">'+t.name+'</div></div></div></td><td class="num"><span class="h2h-record"><span class="w">'+t.h2h_w+'</span><span class="l">&ndash;'+t.h2h_l+'</span></span></td><td class="num">'+fmtH2HDiff(t.h2h_diff)+'</td><td class="num" style="font-size:12px">'+fmtDiff(t.diff)+'</td></tr>'
+    '<tr><td class="mini-rank" style="'+(i===0?'color:'+p.pill:'')+'">'+(i+1)+'</td><td>'+teamCell(t)+'</td><td class="num"><span class="h2h-record"><span class="w">'+t.h2h_w+'</span><span class="l">&ndash;'+t.h2h_l+'</span></span></td><td class="num">'+fmtH2HDiff(t.h2h_diff)+'</td><td class="num" style="font-size:12px">'+fmtDiff(t.diff)+'</td></tr>'
   ).join('');
   const note = resolveNote(group.teams);
   return '<div class="tie-card" id="tie-'+idx+'"><div class="tie-card-header" style="border-left:4px solid '+p.pill+'"><div><div class="tie-wins-badge" style="color:'+p.pill+'">'+group.wins+'W</div><div class="tie-wins-label">'+group.teams.length+' Teams Tied</div></div><div class="tb-tag" style="color:'+p.pill+';border-color:'+p.pill+';background:'+p.bg+'">TIEBREAKER</div></div><table class="mini-table"><thead><tr><th></th><th>Team</th><th class="num">H2H</th><th class="num">H2H +/&minus;</th><th class="num">OVR +/&minus;</th></tr></thead><tbody>'+rows+'</tbody></table>'+(note?'<div class="mini-tb-note">'+note+'</div>':'')+buildH2HPanel(group,played,upcoming,panelId)+'<button class="see-results-btn" id="'+btnId+'" onclick="toggleH2H(\''+panelId+'\',\''+btnId+'\')"><span class="arr">&#9660;</span> See results &amp; upcoming games</button></div>';
