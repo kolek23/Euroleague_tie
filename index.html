@@ -6,6 +6,7 @@
   <title>EuroLeague Tiebreaker Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="tabs.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -183,14 +184,22 @@
   <div class="header-right">
     <span class="last-updated" id="last-updated"></span>
     <button class="icon-btn theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle light/dark mode">☀️</button>
-    <button class="icon-btn" onclick="init()">&#8635; Refresh</button>
+    <button class="icon-btn" onclick="refreshAll()">&#8635; Refresh</button>
     <div class="season-badge">2026&#8211;27</div>
   </div>
 </header>
 
+<nav class="tab-nav" role="tablist" aria-label="Sections">
+  <button class="tab-btn active" role="tab" data-tab="standings" aria-selected="true">Tiebreakers</button>
+  <button class="tab-btn" role="tab" data-tab="attendance" aria-selected="false">Attendance</button>
+  <button class="tab-btn" role="tab" data-tab="referees" aria-selected="false">Referees</button>
+</nav>
+
 <main id="main">
   <div class="loader"><div class="spinner"></div> Loading standings&#8230;</div>
 </main>
+<section class="page" id="view-attendance" hidden></section>
+<section class="page" id="view-referees" hidden></section>
 
 <script>
 'use strict';
@@ -495,5 +504,6 @@ async function init() {
 
 init();
 </script>
+<script src="tabs.js"></script>
 </body>
 </html>
