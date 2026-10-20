@@ -25,7 +25,7 @@ def get_json(url, params=None):
 
 
 def parse_refs(raw):
-    parts = [p.strip() for p in (raw or "").split(",") if p.strip()]
+    parts = [p.strip() for p in (raw or "").split(",") if p.strip() and p.strip() not in ("N/D", "N/A")]
     refs = [", ".join(parts[i:i + 2]) for i in range(0, len(parts), 2)]
     return (refs + ["", "", ""])[:3]
 
