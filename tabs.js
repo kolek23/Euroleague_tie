@@ -7,15 +7,15 @@
 
   const CURRENT = 'E2026';
   // Season start years, newest first. To add an older season: add its year to the end and put data/E<year>.json next to the others.
-  const SEASON_YEARS = [2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007];
+  const SEASON_YEARS = [2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006];
   const SEASONS = SEASON_YEARS.map(y => ({ code:'E' + y, label:y + '\u2013' + String(y + 1).slice(2) }));
   const GAMES_FEED = s => 'https://api-live.euroleague.net/v2/competitions/E/seasons/' + s + '/games';
   const RESULTS_URL = s => 'https://api-live.euroleague.net/v1/results?seasonCode=' + s;
   const BOX_URL = (s, c) => 'https://live.euroleague.net/api/Boxscore?gamecode=' + c + '&seasoncode=' + s;
   const LTU_KEYS = ['SUKYS', 'VILIUS', 'JURGIS', 'RACYS'];     // same keywords as tempScrapeAttendance.py
   const PLAYOFF_PHASES = ['PI', 'PO', 'FF'];
-  // row layout: [code, phase, round, date, home, away, homeScore, awayScore, attendance, ref1, ref2, ref3]
-  const C = { code:0, phase:1, round:2, date:3, home:4, away:5, hs:6, as:7, att:8, refs:[9, 10, 11] };
+  // row layout: [code, phase, round, date, home, away, homeScore, awayScore, attendance, ref1, ref2, ref3, ref4 (4th only in some old seasons)]
+  const C = { code:0, phase:1, round:2, date:3, home:4, away:5, hs:6, as:7, att:8, refs:[9, 10, 11, 12] };
 
   const state = { tab:'standings', season:CURRENT, phase:'ALL', search:'', ltu:false, openRef:null, openTeam:null, minGames:1,
                   sort:{ zal:{ k:'games', d:-1 }, att:{ k:'avg', d:-1 }, ref:{ k:'games', d:-1 }, game:{ k:'date', d:-1 } } };
@@ -251,7 +251,7 @@
     let h = toolbar(extra) + liveNote(data);
     if (!games.length) return h + '<div class="tcard"><div class="empty">No games available for this selection yet.</div></div>';
 
-    const avgGames = games.length ? (games.length * 3) / (totalRefs || 1) : 0;
+    const avgGames = Object.values(by).reduce((s, t) => s + t.n, 0) / (totalRefs || 1);
     const busiest = Object.values(by).reduce((m, t) => !m || t.n > m.n ? t : m, null);
     h += '<div class="kpis">' +
       '<div class="kpi"><div class="kpi-label">Games</div><div class="kpi-value">' + fmt(games.length) + '</div><div class="kpi-sub">' + seasonLabel(data.season) + '</div></div>' +
@@ -275,7 +275,7 @@
     h += '<div class="section-label">Referee assignments</div><div class="tcard"><table><thead><tr><th></th>' +
       th('ref', 'name', 'Referee') + th('ref', 'games', 'Games', 1) + th('ref', 'homePct', 'Home win %', 1) + th('ref', 'pts', 'Avg total pts', 1) + th('ref', 'margin', 'Avg margin', 1) +
       '</tr></thead><tbody>' + (body || '<tr><td colspan="6" class="empty">No referees match.</td></tr>') + '</tbody></table></div>' +
-      '<div class="foot-note">Each game has three referees; every one of them is credited with the game. Home win %, average total points and average margin describe the games a referee worked, not the referee’s own decisions. Click a row to see the games. “Lithuanian” uses the name keywords from the original script (' + LTU_KEYS.join(', ') + ').</div>';
+      '<div class="foot-note">Each game has three referees (four in some older seasons, all listed); every one of them is credited with the game. Home win %, average total points and average margin describe the games a referee worked, not the referee’s own decisions. Click a row to see the games. “Lithuanian” uses the name keywords from the original script (' + LTU_KEYS.join(', ') + ').</div>';
     return h;
   }
 
@@ -332,7 +332,7 @@
       th('zal', 'name', 'Referee') + th('zal', 'n', 'Games', 1) + th('zal', 'w', 'W', 1) + th('zal', 'l', 'L', 1) + th('zal', 'pct', 'Win %', 1) +
       '<th class="num">Home</th><th class="num">Away</th>' + th('zal', 'avg', 'Avg margin', 1) +
       '</tr></thead><tbody>' + (body || '<tr><td colspan="9" class="empty">No referees match.</td></tr>') + '</tbody></table></div>' +
-      '<div class="foot-note">Record of Zalgiris Kaunas in the games each referee worked (every game has three referees, so each game appears under three names). Small samples swing wildly \u2014 use \u201CMin. games\u201D to filter. Click a row to list the games.</div>';
+      '<div class="foot-note">Record of Zalgiris Kaunas in the games each referee worked (every game has three or four referees, so each game appears under each of their names). Small samples swing wildly \u2014 use \u201CMin. games\u201D to filter. Click a row to list the games.</div>';
     return h;
   }
 
@@ -377,7 +377,7 @@
     h += '<div class="section-label">Zalgiris Kaunas record in games refereed by Sasa Pukl</div><div class="tcard"><table><thead><tr>' +
       '<th>Season</th><th class="num">Games</th><th class="num">W</th><th class="num">L</th><th class="num">Win %</th><th class="num">Home</th><th class="num">Away</th><th class="num">Avg margin</th><th class="num">Without Pukl</th>' +
       '</tr></thead><tbody>' + body + '</tbody></table></div>' +
-      '<div class="foot-note">Sasa Pukl is one of three referees in each of these games, so this is Zalgiris’ record when he is on the crew — not a measure of his own decisions. “Without Pukl” is Zalgiris’ record in the same season in all other games. Click a row to see the games.</div>';
+      '<div class="foot-note">Sasa Pukl is one of the referees on the crew in each of these games, so this is Zalgiris’ record when he is on the crew — not a measure of his own decisions. “Without Pukl” is Zalgiris’ record in the same season in all other games. Click a row to see the games.</div>';
     return h;
   }
 
