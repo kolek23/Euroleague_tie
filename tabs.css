@@ -51,3 +51,12 @@ main[hidden] { display:none; }
 .ltu-tag { font-size:10px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.1em; border:1px solid var(--border); border-radius:3px; padding:0 5px; margin-left:8px; color:var(--muted); }
 .foot-note { font-size:11px; color:var(--muted); margin-top:12px; line-height:1.6; }
 .empty { padding:28px; text-align:center; color:var(--muted); font-size:13px; }
+
+.team-row { cursor:pointer; }
+.team-row.open { background:var(--hover-row); }
+.subtable { width:100%; border-collapse:collapse; }
+.subtable th { font-size:10px; padding:6px 10px; }
+.subtable td { padding:5px 10px; font-size:12px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.subtable td.wrap { white-space:normal; }
+.subtable tbody tr:last-child td { border-bottom:none; }
+.tcard .ref-detail td { padding:4px 10px 12px 34px; }

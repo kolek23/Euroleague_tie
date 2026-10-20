@@ -19,8 +19,8 @@
   // row layout: [code, phase, round, date, home, away, homeScore, awayScore, attendance, ref1, ref2, ref3]
   const C = { code:0, phase:1, round:2, date:3, home:4, away:5, hs:6, as:7, att:8, refs:[9, 10, 11] };
 
-  const state = { tab:'standings', season:CURRENT, phase:'ALL', search:'', ltu:false, openRef:null,
-                  sort:{ att:{ k:'avg', d:-1 }, ref:{ k:'games', d:-1 } } };
+  const state = { tab:'standings', season:CURRENT, phase:'ALL', search:'', ltu:false, openRef:null, openTeam:null,
+                  sort:{ att:{ k:'avg', d:-1 }, ref:{ k:'games', d:-1 }, game:{ k:'date', d:-1 } } };
   const cache = {};            // season -> data
   const loading = {};          // season -> promise
 
@@ -161,6 +161,31 @@
   }
 
   /* ── ATTENDANCE ── */
+  // Every home game of one team: sortable sub-table shown under the team row.
+  function teamGames(data, games, code) {
+    const rows = games.filter(r => r[C.home] === code).map(r => ({
+      date:r[C.date], round:r[C.round], phase:r[C.phase], opp:data.teams[r[C.away]] || r[C.away],
+      score:r[C.hs] + '\u2013' + r[C.as], margin:r[C.hs] - r[C.as], att:r[C.att] || 0
+    }));
+    const s = state.sort.game;
+    rows.sort((a, b) => {
+      if (s.k === 'att' && (!a.att || !b.att) && a.att !== b.att) return a.att ? -1 : 1;   // missing figures always last
+      const x = a[s.k], y = b[s.k], c = typeof x === 'string' ? x.localeCompare(y) : x - y;
+      return (c * s.d) || b.date.localeCompare(a.date);
+    });
+    const known = rows.filter(r => r.att);
+    const avg = known.length ? known.reduce((t, r) => t + r.att, 0) / known.length : 0;
+    const head = (k, label, num) => {
+      const on = s.k === k;
+      return '<th class="sortable' + (num ? ' num' : '') + (on ? ' sorted' : '') + '" data-sort="game:' + k + '">' + label + (on ? (s.d < 0 ? ' \u25BE' : ' \u25B4') : '') + '</th>';
+    };
+    const body = rows.map(r => '<tr><td>' + esc(fmtDate(r.date)) + '</td><td class="num">' + (r.round || '') + '</td><td>' + esc(r.phase) + '</td><td class="wrap">' + esc(r.opp) +
+      '</td><td class="num">' + esc(r.score) + '</td><td class="num">' + (r.att ? fmt(r.att) : '<span class="muted">n/a</span>') +
+      '</td><td class="num muted">' + (r.att && avg ? (r.att >= avg ? '+' : '\u2212') + fmt(Math.abs(r.att - avg)) : '') + '</td></tr>').join('');
+    return '<table class="subtable"><thead><tr>' + head('date', 'Date') + head('round', 'Round', 1) + head('phase', 'Phase') + head('opp', 'Opponent') + head('margin', 'Result', 1) +
+      head('att', 'Attendance', 1) + '<th class="num">vs team avg</th></tr></thead><tbody>' + body + '</tbody></table>';
+  }
+
   function renderAttendance(data) {
     const games = data.games.filter(inPhase);
     const withAtt = games.filter(r => r[C.att] > 0);
@@ -185,11 +210,14 @@
       '<div class="kpi"><div class="kpi-label">Average per game</div><div class="kpi-value">' + fmt(total / withAtt.length) + '</div><div class="kpi-sub">across all home arenas</div></div>' +
       '<div class="kpi"><div class="kpi-label">Biggest crowd</div><div class="kpi-value">' + fmt(big[C.att]) + '</div><div class="kpi-sub" title="' + esc(fmtDate(big[C.date])) + '">' + teamName(data, big[C.home]) + ' vs ' + teamName(data, big[C.away]) + '</div></div></div>';
 
-    const body = rows.map((r, i) =>
-      '<tr><td class="rank">' + (i + 1) + '</td><td class="name">' + teamName(data, r.code) + '</td>' +
+    const body = rows.map((r, i) => {
+      const open = state.openTeam === r.code;
+      return '<tr class="team-row' + (open ? ' open' : '') + '" data-team="' + esc(r.code) + '"><td class="rank">' + (i + 1) + '</td><td class="name">' + (open ? '\u25BE ' : '\u25B8 ') + teamName(data, r.code) + '</td>' +
       '<td class="num">' + r.n + '</td><td class="num">' + fmt(r.total) + '</td>' +
       '<td class="num">' + fmt(r.avg) + '<span class="bar" style="width:' + Math.round(60 * r.avg / topAvg) + 'px"></span></td>' +
-      '<td class="num">' + fmt(r.max) + '</td><td class="num">' + fmt(r.min) + '</td><td class="num">' + fmt1(r.pct) + '%</td></tr>').join('');
+      '<td class="num">' + fmt(r.max) + '</td><td class="num">' + fmt(r.min) + '</td><td class="num">' + fmt1(r.pct) + '%</td></tr>' +
+        (open ? '<tr class="ref-detail"><td colspan="8">' + teamGames(data, games, r.code) + '</td></tr>' : '');
+    }).join('');
     const top = withAtt.slice().sort((a, b) => b[C.att] - a[C.att]).slice(0, 10).map((r, i) =>
       '<tr><td class="rank">' + (i + 1) + '</td><td class="wrap">' + teamName(data, r[C.home]) + ' <span class="muted">vs</span> ' + teamName(data, r[C.away]) +
       '<div class="muted" style="font-size:11px">' + esc(fmtDate(r[C.date])) + '</div></td><td class="num">' + fmt(r[C.att]) + '</td></tr>').join('');
@@ -199,7 +227,7 @@
       th('att', 'max', 'Max', 1) + th('att', 'min', 'Min', 1) + th('att', 'pct', 'Avg % of max', 1) +
       '</tr></thead><tbody>' + body + '</tbody></table></div></div>' +
       '<div><div class="section-label">Ten biggest crowds</div><div class="tcard"><table><tbody>' + top + '</tbody></table></div></div></div>' +
-      '<div class="foot-note">Attendance is the figure published in each official boxscore. Games with no figure are left out of totals and averages. “Avg % of max” compares a team’s average with its own biggest home crowd of the season.</div>';
+      '<div class="foot-note">Attendance is the figure published in each official boxscore. Click a team to see all its home games (click a column header to sort). Games with no figure are left out of totals and averages. “Avg % of max” compares a team’s average with its own biggest home crowd of the season.</div>';
     return h;
   }
 
@@ -288,7 +316,7 @@
   for (const k in views) {
     views[k].addEventListener('change', e => {
       const act = e.target.getAttribute('data-act');
-      if (act === 'season') { state.season = e.target.value; state.openRef = null; }
+      if (act === 'season') { state.season = e.target.value; state.openRef = null; state.openTeam = null; }
       else if (act === 'phase') { state.phase = e.target.value; state.openRef = null; }
       else if (act === 'ltu') state.ltu = e.target.checked;
       else return;
@@ -299,9 +327,11 @@
       const t = e.target.closest('[data-sort]');
       if (t) {
         const p = t.getAttribute('data-sort').split(':'), s = state.sort[p[0]];
-        if (s.k === p[1]) s.d = -s.d; else { s.k = p[1]; s.d = p[1] === 'name' ? 1 : -1; }
+        if (s.k === p[1]) s.d = -s.d; else { s.k = p[1]; s.d = ['name', 'opp', 'phase'].indexOf(p[1]) >= 0 ? 1 : -1; }
         render(false); return;
       }
+      const tm = e.target.closest('.team-row');
+      if (tm) { const id = tm.getAttribute('data-team'); state.openTeam = state.openTeam === id ? null : id; render(false); return; }
       const r = e.target.closest('.ref-row');
       if (r) { const id = r.getAttribute('data-ref'); state.openRef = state.openRef === id ? null : id; render(false); }
     });
