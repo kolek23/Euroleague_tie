@@ -6,11 +6,9 @@
   'use strict';
 
   const CURRENT = 'E2026';
-  const SEASONS = [
-    { code:'E2026', label:'2026–27' }, { code:'E2025', label:'2025–26' },
-    { code:'E2024', label:'2024–25' }, { code:'E2023', label:'2023–24' },
-    { code:'E2022', label:'2022–23' }, { code:'E2021', label:'2021–22' }
-  ];
+  // Season start years, newest first. To add an older season: add its year to the end and put data/E<year>.json next to the others.
+  const SEASON_YEARS = [2026, 2025, 2024, 2023, 2022, 2021, 2020];
+  const SEASONS = SEASON_YEARS.map(y => ({ code:'E' + y, label:y + '\u2013' + String(y + 1).slice(2) }));
   const GAMES_FEED = s => 'https://api-live.euroleague.net/v2/competitions/E/seasons/' + s + '/games';
   const RESULTS_URL = s => 'https://api-live.euroleague.net/v1/results?seasonCode=' + s;
   const BOX_URL = (s, c) => 'https://live.euroleague.net/api/Boxscore?gamecode=' + c + '&seasoncode=' + s;
@@ -40,7 +38,7 @@
   async function fetchJson(url) { const r = await fetch(url); if (!r.ok) throw new Error(url + ' → ' + r.status); return r.json(); }
 
   function parseRefs(raw) {
-    const p = String(raw || '').split(',').map(x => x.trim()).filter(Boolean), out = [];
+    const p = String(raw || '').split(',').map(x => x.trim()).filter(x => x && x !== 'N/D' && x !== 'N/A'), out = [];
     for (let i = 0; i < p.length; i += 2) out.push(p.slice(i, i + 2).join(', '));
     while (out.length < 3) out.push('');
     return out.slice(0, 3);
@@ -199,7 +197,7 @@
     sortRows(rows, state.sort.att);
     const topAvg = Math.max.apply(null, rows.map(r => r.avg).concat([1]));
 
-    let h = toolbar() + liveNote(data);
+    let h = toolbar() + liveNote(data) + (missing > games.length / 2 && games.length ? '<div class="warn-box">Most games in this selection have no attendance figure (arenas were closed or limited during COVID-19, or the figure was not published), so totals and averages cover only the ' + withAtt.length + ' games that do.</div>' : '');
     if (!withAtt.length) return h + '<div class="tcard"><div class="empty">No attendance data available for this selection yet.</div></div>';
 
     const total = withAtt.reduce((s, r) => s + r[C.att], 0);
