@@ -125,11 +125,11 @@
   }
 
   /* ── SHARED UI ── */
-  function toolbar(extra) {
+  function toolbar(extra, noSeason) {
     const seasonOpts = SEASONS.map(s => '<option value="' + s.code + '"' + (s.code === state.season ? ' selected' : '') + '>' + s.label + (s.code === CURRENT ? ' (live)' : '') + '</option>').join('');
     const phaseOpts = [['ALL', 'All games'], ['RS', 'Regular season'], ['PO', 'Playoffs & Final Four']]
       .map(p => '<option value="' + p[0] + '"' + (p[0] === state.phase ? ' selected' : '') + '>' + p[1] + '</option>').join('');
-    return '<div class="toolbar"><label>Season <select data-act="season">' + seasonOpts + '</select></label>' +
+    return '<div class="toolbar">' + (noSeason ? '' : '<label>Season <select data-act="season">' + seasonOpts + '</select></label>') +
       '<label>Games <select data-act="phase">' + phaseOpts + '</select></label>' + (extra || '') + '</div>';
   }
   function liveNote(data) {
@@ -338,18 +338,65 @@
     return h;
   }
 
+  /* ── SASA PUKL: ZALGIRIS RECORD IN HIS GAMES ── */
+  const PUKL = 'PUKL, SASA';
+  async function loadAllSeasons() {
+    const res = await Promise.all(SEASONS.map(s => loadSeason(s.code).catch(() => null)));
+    return res.filter(Boolean);
+  }
+  function renderPukl(all) {
+    let h = toolbar('', true);
+    const cur = all.find(d => d.season === CURRENT);
+    if (cur) h += liveNote(cur);
+    const hasP = r => C.refs.some(i => r[i] === PUKL);
+    const seasons = all.slice().sort((a, b) => b.season.localeCompare(a.season)).map(d => {
+      const zg = d.games.filter(r => inPhase(r) && (r[C.home] === ZAL || r[C.away] === ZAL));
+      const withP = zg.filter(hasP), without = zg.filter(r => !hasP(r));
+      return { data:d, withP:withP, without:without, rec:record(withP), recWithout:record(without) };
+    });
+    const allWith = [].concat.apply([], seasons.map(x => x.withP.map(r => ({ r:r, d:x.data }))));
+    const total = record(allWith.map(x => x.r));
+    const totalWithout = record([].concat.apply([], seasons.map(x => x.without)));
+    if (!allWith.length) return h + '<div class="tcard"><div class="empty">No Zalgiris games with Sasa Pukl in this selection.</div></div>';
+
+    h += '<div class="kpis">' +
+      '<div class="kpi"><div class="kpi-label">Zalgiris with Pukl</div><div class="kpi-value">' + wl(total.w, total.l) + '</div><div class="kpi-sub">' + fmt1(total.pct) + '% wins · ' + total.n + ' games · all seasons</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Zalgiris without Pukl</div><div class="kpi-value">' + wl(totalWithout.w, totalWithout.l) + '</div><div class="kpi-sub">' + fmt1(totalWithout.pct) + '% wins · ' + totalWithout.n + ' games</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Difference</div><div class="kpi-value">' + sgn(total.pct - totalWithout.pct) + ' pp</div><div class="kpi-sub">win % with minus without Pukl</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Home / away with Pukl</div><div class="kpi-value">' + wl(total.hw, total.hl) + ' / ' + wl(total.aw, total.al) + '</div><div class="kpi-sub">avg margin ' + sgn(total.avg) + '</div></div></div>';
+
+    const line = (key, label, rec, recWo, list, strong) => {
+      const open = state.openRef === key;
+      let t = '<tr class="ref-row' + (open ? ' open' : '') + '" data-ref="' + esc(key) + '"' + (strong ? ' style="font-weight:700"' : '') + '><td class="name">' + (open ? '▾ ' : '▸ ') + esc(label) + '</td>' +
+        '<td class="num">' + rec.n + '</td><td class="num">' + rec.w + '</td><td class="num">' + rec.l + '</td><td class="num">' + (rec.n ? fmt1(rec.pct) + '%' : '—') + '</td>' +
+        '<td class="num">' + wl(rec.hw, rec.hl) + '</td><td class="num">' + wl(rec.aw, rec.al) + '</td><td class="num">' + (rec.n ? sgn(rec.avg) : '—') + '</td>' +
+        '<td class="num muted">' + (recWo.n ? wl(recWo.w, recWo.l) + ' (' + fmt1(recWo.pct) + '%)' : '—') + '</td></tr>';
+      if (open) t += '<tr class="ref-detail"><td colspan="9">' + (list.length ? list.slice().sort((a, b) => b.r[C.date].localeCompare(a.r[C.date])).map(x => zalGameLine(x.d, x.r, PUKL)).join('') : '<span class="muted">No games.</span>') + '</td></tr>';
+      return t;
+    };
+    let body = line('ALL', 'All seasons', total, totalWithout, allWith, true);
+    for (const x of seasons) body += line('S:' + x.data.season, seasonLabel(x.data.season), x.rec, x.recWithout, x.withP.map(r => ({ r:r, d:x.data })), false);
+    h += '<div class="section-label">Zalgiris Kaunas record in games refereed by Sasa Pukl</div><div class="tcard"><table><thead><tr>' +
+      '<th>Season</th><th class="num">Games</th><th class="num">W</th><th class="num">L</th><th class="num">Win %</th><th class="num">Home</th><th class="num">Away</th><th class="num">Avg margin</th><th class="num">Without Pukl</th>' +
+      '</tr></thead><tbody>' + body + '</tbody></table></div>' +
+      '<div class="foot-note">Sasa Pukl is one of three referees in each of these games, so this is Zalgiris’ record when he is on the crew — not a measure of his own decisions. “Without Pukl” is Zalgiris’ record in the same season in all other games. Click a row to see the games.</div>';
+    return h;
+  }
+
   /* ── ROUTING / RENDERING ── */
-  const views = { attendance:document.getElementById('view-attendance'), referees:document.getElementById('view-referees'), zalgiris:document.getElementById('view-zalgiris') };
-  const renderers = { attendance:renderAttendance, referees:renderReferees, zalgiris:renderZalgiris };
+  const views = { attendance:document.getElementById('view-attendance'), referees:document.getElementById('view-referees'), zalgiris:document.getElementById('view-zalgiris'), pukl:document.getElementById('view-pukl') };
+  const renderers = { attendance:renderAttendance, referees:renderReferees, zalgiris:renderZalgiris, pukl:renderPukl };
 
   async function render(force) {
     const tab = state.tab, view = views[tab];
     if (!view) return;
     const focused = document.activeElement && document.activeElement.getAttribute && document.activeElement.getAttribute('data-act') === 'search';
-    if (!cache[state.season] || force) view.innerHTML = toolbar() + '<div class="loader"><div class="spinner"></div> Loading ' + seasonLabel(state.season) + ' data…</div>';
+    const isAll = tab === 'pukl';
+    const ready = isAll ? SEASONS.every(x => cache[x.code]) : cache[state.season];
+    if (!ready || force) view.innerHTML = toolbar('', isAll) + '<div class="loader"><div class="spinner"></div> Loading ' + (isAll ? 'all seasons' : seasonLabel(state.season)) + ' data\u2026</div>';
     let data;
-    try { data = await loadSeason(state.season, force); }
-    catch (e) { view.innerHTML = toolbar() + '<div class="error-box"><strong>Could not load ' + seasonLabel(state.season) + ' data.</strong><br>' + esc(e.message) + '</div>'; return; }
+    try { data = isAll ? await loadAllSeasons() : await loadSeason(state.season, force); }
+    catch (e) { view.innerHTML = toolbar('', isAll) + '<div class="error-box"><strong>Could not load data.</strong><br>' + esc(e.message) + '</div>'; return; }
     if (state.tab !== tab) return;                                  // user switched tabs while loading
     view.innerHTML = renderers[tab](data);
     const stampEl = view.querySelector('.toolbar');
