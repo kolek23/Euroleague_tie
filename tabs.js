@@ -7,7 +7,7 @@
 
   const CURRENT = 'E2026';
   // Season start years, newest first. To add an older season: add its year to the end and put data/E<year>.json next to the others.
-  const SEASON_YEARS = [2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018];
+  const SEASON_YEARS = [2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017];
   const SEASONS = SEASON_YEARS.map(y => ({ code:'E' + y, label:y + '\u2013' + String(y + 1).slice(2) }));
   const GAMES_FEED = s => 'https://api-live.euroleague.net/v2/competitions/E/seasons/' + s + '/games';
   const RESULTS_URL = s => 'https://api-live.euroleague.net/v1/results?seasonCode=' + s;
