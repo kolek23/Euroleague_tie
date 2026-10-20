@@ -61,3 +61,6 @@ main[hidden] { display:none; }
 .subtable tbody tr:last-child td { border-bottom:none; }
 .tcard .ref-detail td { padding:4px 10px 12px 34px; }
 .team-row + .ref-detail > td { max-width:0; overflow-x:auto; }
+
+.res-w { color:var(--green) !important; }
+.res-l { color:var(--red) !important; }

@@ -19,8 +19,8 @@
   // row layout: [code, phase, round, date, home, away, homeScore, awayScore, attendance, ref1, ref2, ref3]
   const C = { code:0, phase:1, round:2, date:3, home:4, away:5, hs:6, as:7, att:8, refs:[9, 10, 11] };
 
-  const state = { tab:'standings', season:CURRENT, phase:'ALL', search:'', ltu:false, openRef:null, openTeam:null,
-                  sort:{ att:{ k:'avg', d:-1 }, ref:{ k:'games', d:-1 }, game:{ k:'date', d:-1 } } };
+  const state = { tab:'standings', season:CURRENT, phase:'ALL', search:'', ltu:false, openRef:null, openTeam:null, minGames:1,
+                  sort:{ zal:{ k:'games', d:-1 }, att:{ k:'avg', d:-1 }, ref:{ k:'games', d:-1 }, game:{ k:'date', d:-1 } } };
   const cache = {};            // season -> data
   const loading = {};          // season -> promise
 
@@ -281,9 +281,66 @@
     return h;
   }
 
+  /* ── ZALGIRIS KAUNAS vs EACH REFEREE ── */
+  const ZAL = 'ZAL';
+  const zres = r => {                                   // game from Zalgiris' point of view
+    const h = r[C.home] === ZAL, f = h ? r[C.hs] : r[C.as], a = h ? r[C.as] : r[C.hs];
+    return { win:f > a, home:h, f:f, a:a, margin:f - a, opp:h ? r[C.away] : r[C.home] };
+  };
+  function record(games) {
+    const o = { n:0, w:0, l:0, hw:0, hl:0, aw:0, al:0, margin:0 };
+    for (const r of games) {
+      const x = zres(r); o.n++; o.margin += x.margin;
+      if (x.win) { o.w++; if (x.home) o.hw++; else o.aw++; } else { o.l++; if (x.home) o.hl++; else o.al++; }
+    }
+    o.pct = o.n ? 100 * o.w / o.n : 0; o.avg = o.n ? o.margin / o.n : 0;
+    return o;
+  }
+  const wl = (w, l) => w + '\u2013' + l;
+  const sgn = n => (n > 0 ? '+' : n < 0 ? '\u2212' : '') + fmt1(Math.abs(n));
+  function zalGameLine(data, r, mark) {
+    const x = zres(r), mates = C.refs.map(k => r[k]).filter(v => v && v !== mark).map(refName).join(', ');
+    return '<div class="ref-game"><span>' + esc(fmtDate(r[C.date])) + '</span><b class="' + (x.win ? 'res-w' : 'res-l') + '">' + (x.win ? 'W' : 'L') + ' ' + x.f + '\u2013' + x.a + '</b><span>' +
+      (x.home ? 'vs ' : '@ ') + teamName(data, x.opp) + (mates ? ' \u00b7 with ' + esc(mates) : '') + '</span></div>';
+  }
+  function renderZalgiris(data) {
+    const games = data.games.filter(r => inPhase(r) && (r[C.home] === ZAL || r[C.away] === ZAL));
+    const minOpts = [1, 2, 3, 5].map(n => '<option value="' + n + '"' + (state.minGames === n ? ' selected' : '') + '>' + n + '+</option>').join('');
+    const extra = '<label>Min. games <select data-act="min">' + minOpts + '</select></label>' +
+      '<label>Search <input type="search" data-act="search" placeholder="Referee name" value="' + esc(state.search) + '"></label>';
+    let h = toolbar(extra) + liveNote(data);
+    if (!games.length) return h + '<div class="tcard"><div class="empty">No Zalgiris Kaunas games in this selection yet.</div></div>';
+    const by = {};
+    for (const r of games) for (const raw of C.refs.map(i => r[i]).filter(Boolean)) (by[raw] || (by[raw] = [])).push(r);
+    const all = record(games), q = state.search.trim().toLowerCase();
+    let rows = Object.keys(by).map(raw => Object.assign({ raw:raw, name:refName(raw), list:by[raw] }, record(by[raw])));
+    const refCount = rows.length;
+    rows = rows.filter(r => r.n >= state.minGames && (!q || r.name.toLowerCase().indexOf(q) >= 0));
+    sortRows(rows, state.sort.zal);
+    h += '<div class="kpis">' +
+      '<div class="kpi"><div class="kpi-label">Zalgiris record</div><div class="kpi-value">' + wl(all.w, all.l) + '</div><div class="kpi-sub">' + fmt1(all.pct) + '% wins \u00b7 ' + seasonLabel(data.season) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Home / away</div><div class="kpi-value">' + wl(all.hw, all.hl) + ' / ' + wl(all.aw, all.al) + '</div><div class="kpi-sub">home record / away record</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Average margin</div><div class="kpi-value">' + sgn(all.avg) + '</div><div class="kpi-sub">points, Zalgiris perspective</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Referees</div><div class="kpi-value">' + refCount + '</div><div class="kpi-sub">worked at least one Zalgiris game</div></div></div>';
+    let body = '';
+    rows.forEach((r, i) => {
+      const open = state.openRef === r.raw;
+      body += '<tr class="ref-row' + (open ? ' open' : '') + '" data-ref="' + esc(r.raw) + '"><td class="rank">' + (i + 1) + '</td><td class="name">' + (open ? '\u25BE ' : '\u25B8 ') + esc(r.name) +
+        (isLtu(r.raw) ? '<span class="ltu-tag">LTU</span>' : '') + '</td><td class="num">' + r.n + '</td><td class="num">' + r.w + '</td><td class="num">' + r.l + '</td><td class="num">' + fmt1(r.pct) + '%</td>' +
+        '<td class="num">' + wl(r.hw, r.hl) + '</td><td class="num">' + wl(r.aw, r.al) + '</td><td class="num">' + sgn(r.avg) + '</td></tr>';
+      if (open) body += '<tr class="ref-detail"><td colspan="9">' + r.list.slice().sort((a, b) => b[C.date].localeCompare(a[C.date])).map(g => zalGameLine(data, g, r.raw)).join('') + '</td></tr>';
+    });
+    h += '<div class="section-label">Zalgiris Kaunas record by referee</div><div class="tcard"><table><thead><tr><th></th>' +
+      th('zal', 'name', 'Referee') + th('zal', 'n', 'Games', 1) + th('zal', 'w', 'W', 1) + th('zal', 'l', 'L', 1) + th('zal', 'pct', 'Win %', 1) +
+      '<th class="num">Home</th><th class="num">Away</th>' + th('zal', 'avg', 'Avg margin', 1) +
+      '</tr></thead><tbody>' + (body || '<tr><td colspan="9" class="empty">No referees match.</td></tr>') + '</tbody></table></div>' +
+      '<div class="foot-note">Record of Zalgiris Kaunas in the games each referee worked (every game has three referees, so each game appears under three names). Small samples swing wildly \u2014 use \u201CMin. games\u201D to filter. Click a row to list the games.</div>';
+    return h;
+  }
+
   /* ── ROUTING / RENDERING ── */
-  const views = { attendance:document.getElementById('view-attendance'), referees:document.getElementById('view-referees') };
-  const renderers = { attendance:renderAttendance, referees:renderReferees };
+  const views = { attendance:document.getElementById('view-attendance'), referees:document.getElementById('view-referees'), zalgiris:document.getElementById('view-zalgiris') };
+  const renderers = { attendance:renderAttendance, referees:renderReferees, zalgiris:renderZalgiris };
 
   async function render(force) {
     const tab = state.tab, view = views[tab];
@@ -319,6 +376,7 @@
       if (act === 'season') { state.season = e.target.value; state.openRef = null; state.openTeam = null; }
       else if (act === 'phase') { state.phase = e.target.value; state.openRef = null; }
       else if (act === 'ltu') state.ltu = e.target.checked;
+      else if (act === 'min') state.minGames = parseInt(e.target.value, 10) || 1;
       else return;
       render(false);
     });
