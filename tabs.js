@@ -214,7 +214,7 @@
       const open = state.openTeam === r.code;
       return '<tr class="team-row' + (open ? ' open' : '') + '" data-team="' + esc(r.code) + '"><td class="rank">' + (i + 1) + '</td><td class="name">' + (open ? '\u25BE ' : '\u25B8 ') + teamName(data, r.code) + '</td>' +
       '<td class="num">' + r.n + '</td><td class="num">' + fmt(r.total) + '</td>' +
-      '<td class="num">' + fmt(r.avg) + '<span class="bar" style="width:' + Math.round(60 * r.avg / topAvg) + 'px"></span></td>' +
+      '<td class="num">' + fmt(r.avg) + '<span class="bar" style="width:' + Math.round(40 * r.avg / topAvg) + 'px"></span></td>' +
       '<td class="num">' + fmt(r.max) + '</td><td class="num">' + fmt(r.min) + '</td><td class="num">' + fmt1(r.pct) + '%</td></tr>' +
         (open ? '<tr class="ref-detail"><td colspan="8">' + teamGames(data, games, r.code) + '</td></tr>' : '');
     }).join('');

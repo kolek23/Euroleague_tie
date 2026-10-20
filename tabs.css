@@ -24,18 +24,18 @@ main[hidden] { display:none; }
 .kpi-value { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:32px; line-height:1.15; font-variant-numeric:tabular-nums; }
 .kpi-sub { font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-.split { display:grid; grid-template-columns:minmax(0,1fr) 420px; gap:28px; align-items:start; }
+.split { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:28px; align-items:start; }
 @media (max-width:1000px) { .split { grid-template-columns:minmax(0,1fr); } }
 .split > div { min-width:0; }
 .tcard td.wrap { white-space:normal; }
 .tcard { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow-x:auto; }
 .tcard table { width:100%; border-collapse:collapse; }
-.tcard th { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); padding:10px 14px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; user-select:none; }
+.tcard th { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); padding:10px 10px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; user-select:none; }
 .tcard th.sortable { cursor:pointer; }
 .tcard th.sortable:hover { color:var(--text); }
 .tcard th.sorted { color:var(--accent); }
 .tcard th.num, .tcard td.num { text-align:right; font-variant-numeric:tabular-nums; }
-.tcard td { padding:9px 14px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.tcard td { padding:9px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
 .tcard tbody tr:last-child td { border-bottom:none; }
 .tcard tbody tr:hover { background:var(--hover-row); }
 .tcard td.muted, .muted { color:var(--muted); }
@@ -60,3 +60,4 @@ main[hidden] { display:none; }
 .subtable td.wrap { white-space:normal; }
 .subtable tbody tr:last-child td { border-bottom:none; }
 .tcard .ref-detail td { padding:4px 10px 12px 34px; }
+.team-row + .ref-detail > td { max-width:0; overflow-x:auto; }
