@@ -7,7 +7,7 @@
 
   const CURRENT = 'E2026';
   // Season start years, newest first. To add an older season: add its year to the end and put data/E<year>.json next to the others.
-  const SEASON_YEARS = [2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016];
+  const SEASON_YEARS = [2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015];
   const SEASONS = SEASON_YEARS.map(y => ({ code:'E' + y, label:y + '\u2013' + String(y + 1).slice(2) }));
   const GAMES_FEED = s => 'https://api-live.euroleague.net/v2/competitions/E/seasons/' + s + '/games';
   const RESULTS_URL = s => 'https://api-live.euroleague.net/v1/results?seasonCode=' + s;
@@ -125,7 +125,7 @@
   /* ── SHARED UI ── */
   function toolbar(extra, noSeason) {
     const seasonOpts = SEASONS.map(s => '<option value="' + s.code + '"' + (s.code === state.season ? ' selected' : '') + '>' + s.label + (s.code === CURRENT ? ' (live)' : '') + '</option>').join('');
-    const phaseOpts = [['ALL', 'All games'], ['RS', 'Regular season'], ['PO', 'Playoffs & Final Four']]
+    const phaseOpts = [['ALL', 'All games'], ['RS', 'Regular season (incl. Top 16)'], ['PO', 'Playoffs & Final Four']]
       .map(p => '<option value="' + p[0] + '"' + (p[0] === state.phase ? ' selected' : '') + '>' + p[1] + '</option>').join('');
     return '<div class="toolbar">' + (noSeason ? '' : '<label>Season <select data-act="season">' + seasonOpts + '</select></label>') +
       '<label>Games <select data-act="phase">' + phaseOpts + '</select></label>' + (extra || '') + '</div>';
@@ -138,7 +138,7 @@
     return h;
   }
   function inPhase(r) {
-    return state.phase === 'ALL' || (state.phase === 'RS' ? r[C.phase] === 'RS' : PLAYOFF_PHASES.indexOf(r[C.phase]) >= 0);
+    return state.phase === 'ALL' || (state.phase === 'RS' ? PLAYOFF_PHASES.indexOf(r[C.phase]) < 0 : PLAYOFF_PHASES.indexOf(r[C.phase]) >= 0);   // 'RS' = everything before the playoffs (incl. old Top 16 stage)
   }
   function stamp(data) {
     if (data.season === CURRENT && data.live && !data.liveError)
