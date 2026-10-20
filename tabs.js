@@ -12,7 +12,10 @@
   const GAMES_FEED = s => 'https://api-live.euroleague.net/v2/competitions/E/seasons/' + s + '/games';
   const RESULTS_URL = s => 'https://api-live.euroleague.net/v1/results?seasonCode=' + s;
   const BOX_URL = (s, c) => 'https://live.euroleague.net/api/Boxscore?gamecode=' + c + '&seasoncode=' + s;
-  const LTU_KEYS = ['SUKYS', 'VILIUS', 'JURGIS', 'RACYS'];     // same keywords as tempScrapeAttendance.py
+  // Lithuanian referees: every referee the Euroleague's own referee registry (api-live.euroleague.net/v2/competitions/E/referees)
+  // lists under Lithuania, plus Saulius Racys, who is registered under Sweden but is a Lithuanian (LKL) referee.
+  const LTU_REFS = new Set(['BRAZAUSKAS, ROMUALDAS', 'JANKAUSKAS, JUOZAS', 'JASEVICIUS, TOMAS', 'LAURINAVICIUS, JURGIS', 'PILIPAUSKAS, KESTUTIS',
+    'RACYS, SAULIUS', 'RIMKUS, TOMAS', 'SKERYS, KESTUTIS', 'SUKYS, ARTURAS', 'VILIUS, GYTIS']);
   const PLAYOFF_PHASES = ['PI', 'PO', 'FF'];
   // row layout: [code, phase, round, date, home, away, homeScore, awayScore, attendance, ref1, ref2, ref3, ref4 (4th only in some old seasons)]
   const C = { code:0, phase:1, round:2, date:3, home:4, away:5, hs:6, as:7, att:8, refs:[9, 10, 11, 12] };
@@ -32,7 +35,7 @@
     const i = raw.indexOf(',');
     return titleCase(i < 0 ? raw : raw.slice(i + 1).trim() + ' ' + raw.slice(0, i).trim());
   }
-  const isLtu = raw => LTU_KEYS.some(k => raw.indexOf(k) >= 0);
+  const isLtu = raw => LTU_REFS.has(raw);
 
   /* ── DATA ── */
   async function fetchJson(url) { const r = await fetch(url); if (!r.ok) throw new Error(url + ' → ' + r.status); return r.json(); }
@@ -275,7 +278,7 @@
     h += '<div class="section-label">Referee assignments</div><div class="tcard"><table><thead><tr><th></th>' +
       th('ref', 'name', 'Referee') + th('ref', 'games', 'Games', 1) + th('ref', 'homePct', 'Home win %', 1) + th('ref', 'pts', 'Avg total pts', 1) + th('ref', 'margin', 'Avg margin', 1) +
       '</tr></thead><tbody>' + (body || '<tr><td colspan="6" class="empty">No referees match.</td></tr>') + '</tbody></table></div>' +
-      '<div class="foot-note">Each game has three referees (four in some older seasons, all listed); every one of them is credited with the game. Home win %, average total points and average margin describe the games a referee worked, not the referee’s own decisions. Click a row to see the games. “Lithuanian” uses the name keywords from the original script (' + LTU_KEYS.join(', ') + ').</div>';
+      '<div class="foot-note">Each game has three referees (four in some older seasons, all listed); every one of them is credited with the game. Home win %, average total points and average margin describe the games a referee worked, not the referee’s own decisions. Click a row to see the games. “Lithuanian referees” = the referees listed as Lithuanian in the Euroleague referee registry (Brazauskas, Jankauskas, Jasevicius, Laurinavicius, Pilipauskas, Rimkus, Skerys, Sukys, Vilius) plus Saulius Racys, who is registered under Sweden but is a Lithuanian referee.</div>';
     return h;
   }
 
