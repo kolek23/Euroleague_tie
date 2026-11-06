@@ -110,6 +110,9 @@
     .losses-col { font-family:'Barlow Condensed',sans-serif; font-weight:400; font-size:18px; color:var(--muted); text-align:right !important; }
     .diff-pos { color:var(--green); }
     .diff-neg { color:var(--red); }
+    .streak-col { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:0.03em; }
+    .standings-card td.streak-w { color:var(--green); }
+    .standings-card td.streak-l { color:var(--red); }
 
     .tie-pill { display:inline-flex; align-items:center; background:var(--bc,rgba(232,181,0,0.12)); border:1px solid var(--pc,rgba(232,181,0,0.35)); color:var(--pc,#e8b500); font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.1em; padding:2px 7px; border-radius:20px; text-transform:uppercase; cursor:pointer; transition:filter 0.15s; }
     .tie-pill:hover { filter:brightness(1.2); }
@@ -279,7 +282,7 @@ async function loadGamesV2() {
     const h = g.local && g.local.club, a = g.road && g.road.club;
     if (!h || !a || h.isVirtual || a.isVirtual) continue;
     for (const c of [h, a]) if (c.images && c.images.crest) CRESTS[c.code] = c.images.crest;
-    const base = { id:g.identifier, round:g.round || 0, date:fmtDate(g.utcDate || g.date),
+    const base = { id:g.identifier, round:g.round || 0, date:fmtDate(g.utcDate || g.date), ts:Date.parse(g.utcDate || g.date),
                    homeCode:h.code, homeName:h.name, awayCode:a.code, awayName:a.name };
     if (g.played) {
       const hs = g.local.score, as_ = g.road.score;
@@ -304,7 +307,7 @@ async function loadGamesV1Fallback() {
     const hs = parseInt(get('homescore'),10), as_ = parseInt(get('awayscore'),10);
     const homeCode = get('homecode'), awayCode = get('awaycode');
     if (!homeCode || !awayCode || isNaN(hs) || isNaN(as_)) continue;
-    played.push({ id:get('gamecode'), round:parseInt(get('gameday'),10)||0, date:get('date'),
+    played.push({ id:get('gamecode'), round:parseInt(get('gameday'),10)||0, date:get('date'), ts:Date.parse(get('date')),
       homeCode, homeName:get('hometeam'), homeScore:hs, awayCode, awayName:get('awayteam'), awayScore:as_,
       winner:hs>as_?homeCode:awayCode, diff:Math.abs(hs-as_) });
   }
@@ -326,6 +329,15 @@ function buildStandings(played) {
     teams[g.awayCode].pf += g.awayScore; teams[g.awayCode].pa += g.homeScore;
     if (g.winner === g.homeCode) { teams[g.homeCode].wins++; teams[g.awayCode].losses++; }
     else { teams[g.awayCode].wins++; teams[g.homeCode].losses++; }
+  }
+  /* Current streak: walk games in chronological order (tip-off time, falling back to round). */
+  const chrono = played.slice().sort((a,b) =>
+    (isFinite(a.ts) && isFinite(b.ts) && a.ts !== b.ts) ? a.ts - b.ts : a.round - b.round);
+  for (const g of chrono) {
+    for (const code of [g.homeCode, g.awayCode]) {
+      const t = teams[code], r = g.winner === code ? 'W' : 'L';
+      if (t.streakType === r) t.streak++; else { t.streakType = r; t.streak = 1; }
+    }
   }
   return Object.values(teams)
     .map(t => ({ ...t, diff: t.pf - t.pa }))
@@ -418,9 +430,9 @@ function buildStandingsTable(standings) {
     const cutoffCls = t.rank === PLAYOFF_CUTOFF+1 ? 'cutoff-playoffs' : t.rank === PLAYIN_CUTOFF+1 ? 'cutoff-playin' : '';
     const zoneCls   = t.rank <= PLAYOFF_CUTOFF ? 'zone-playoffs' : t.rank <= PLAYIN_CUTOFF ? 'zone-playin' : '';
     const cls = (cutoffCls+' '+zoneCls).trim();
-    return '<tr class="'+cls+'"><td class="rank-col">'+t.rank+'</td><td>'+teamCell(t)+'</td><td class="wins-col">'+t.wins+'</td><td class="losses-col">'+t.losses+'</td><td class="num">'+t.pf+'</td><td class="num">'+t.pa+'</td><td class="num">'+fmtDiff(t.diff)+'</td><td>'+pill+'</td></tr>';
+    return '<tr class="'+cls+'"><td class="rank-col">'+t.rank+'</td><td>'+teamCell(t)+'</td><td class="wins-col">'+t.wins+'</td><td class="losses-col">'+t.losses+'</td><td class="num">'+t.pf+'</td><td class="num">'+t.pa+'</td><td class="num">'+fmtDiff(t.diff)+'</td><td class="num streak-col '+(t.streakType==='W'?'streak-w':'streak-l')+'">'+(t.streak ? t.streak+t.streakType : '')+'</td><td>'+pill+'</td></tr>';
   }).join('');
-  return '<div class="section-label">Full Standings</div><div class="standings-card"><table><thead><tr><th></th><th>Team</th><th class="num">W</th><th class="num">L</th><th class="num">PF</th><th class="num">PA</th><th class="num">DIFF</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  return '<div class="section-label">Full Standings</div><div class="standings-card"><table><thead><tr><th></th><th>Team</th><th class="num">W</th><th class="num">L</th><th class="num">PF</th><th class="num">PA</th><th class="num">DIFF</th><th class="num" title="Current streak">STRK</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
 /* ── 7. H2H PANEL ── */
