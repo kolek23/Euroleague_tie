@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="tabs.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* Stop iOS Safari from inflating text in landscape / on rotation */
+    html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
 
     /* ── DARK MODE (default) ── */
     :root {
@@ -56,10 +58,10 @@
     body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; font-size:14px; min-height:100vh; transition:background 0.2s, color 0.2s; }
 
     /* ── Header ── */
-    header { background:var(--surface); border-bottom:3px solid var(--accent); padding:0 32px; display:flex; align-items:center; justify-content:space-between; height:64px; position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(0,0,0,0.15); }
-    .logo { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; letter-spacing:0.08em; text-transform:uppercase; }
+    header { background:var(--surface); border-bottom:3px solid var(--accent); padding:0 32px; display:flex; align-items:center; justify-content:space-between; gap:12px; height:64px; position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(0,0,0,0.15); }
+    .logo { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; letter-spacing:0.08em; text-transform:uppercase; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis; }
     .logo span { color:var(--accent); }
-    .header-right { display:flex; align-items:center; gap:10px; }
+    .header-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
     .season-badge { background:var(--accent); color:#fff; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:0.12em; padding:4px 12px; border-radius:4px; }
 
     .icon-btn {
@@ -77,14 +79,15 @@
     .last-updated { font-size:11px; color:var(--muted); font-style:italic; }
 
     /* ── Layout ── */
-    main { max-width:1340px; margin:0 auto; padding:36px 24px; display:grid; grid-template-columns:1fr 494px; gap:28px; align-items:start; }
-    @media (max-width:900px) { main { grid-template-columns:minmax(0,1fr); } .right-panel { min-width:0; } }
+    main { max-width:1340px; margin:0 auto; padding:36px 24px; display:grid; grid-template-columns:minmax(0,1fr) minmax(380px,440px); gap:28px; align-items:start; }
+    main > * { min-width:0; }
+    @media (max-width:1180px) { main { grid-template-columns:minmax(0,1fr); } }
 
     .section-label { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
     .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
 
     /* ── Standings table ── */
-    .standings-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:visible; box-shadow:0 1px 6px rgba(0,0,0,0.08); }
+    .standings-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; box-shadow:0 1px 6px rgba(0,0,0,0.08); }
     .standings-card table { width:100%; border-collapse:collapse; }
     .standings-card thead tr { background:var(--surface); border-bottom:1px solid var(--border); }
     .standings-card th { font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); padding:12px 14px; text-align:left; }
@@ -100,11 +103,11 @@
     .standings-card td.num { text-align:right; font-variant-numeric:tabular-nums; color:var(--muted); }
 
     .rank-col { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:16px; color:var(--muted); width:32px; text-align:center !important; }
-    .team-cell { display:flex; align-items:center; gap:10px; }
+    .team-cell { display:flex; align-items:center; gap:10px; min-width:0; }
+    td.team-td { width:100%; max-width:0; min-width:110px; }
     .team-logo { width:28px; height:28px; object-fit:contain; flex-shrink:0; }
-    .team-name { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:0.03em; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:320px; }
+    .team-name { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:0.03em; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
     body.light .team-name { color:var(--text); }
-    .mini-table .team-name { max-width:150px; }
     body:not(.light) .team-logo { filter:drop-shadow(0 0 1px rgba(255,255,255,0.55)); }
     .wins-col   { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:18px; color:var(--text); text-align:right !important; }
     .losses-col { font-family:'Barlow Condensed',sans-serif; font-weight:400; font-size:18px; color:var(--muted); text-align:right !important; }
@@ -126,7 +129,49 @@
     .sort-note { margin-left:auto; font-weight:600; letter-spacing:0.1em; color:var(--accent); cursor:pointer; }
     .sort-note:hover { text-decoration:underline; }
     #standings-wrap { min-width:0; }
-    @media (max-width:600px) { .l5-dots { display:none; } .standings-card { overflow-x:auto; } .standings-card td, .standings-card th { padding-left:7px; padding-right:7px; } .standings-card .team-name { max-width:120px; } .standings-card .team-logo { width:22px; height:22px; } }
+    .standings-card th, .standings-card td { white-space:nowrap; }
+    @media (max-width:1340px) and (min-width:1181px), (max-width:760px) { .standings-card td, .standings-card th { padding-left:9px; padding-right:9px; } }
+    @media (max-width:1300px) and (min-width:1181px), (max-width:700px) { .l5-dots { display:none; } .l5-rec { margin-right:0; } }
+    @media (max-width:600px) {
+      .hide-sm { display:none; }
+      .standings-card td, .standings-card th { padding-left:5px; padding-right:5px; }
+      .standings-card th { letter-spacing:0.08em; }
+      .standings-card td { padding-top:9px; padding-bottom:9px; }
+      .standings-card .team-logo { width:20px; height:20px; }
+      .standings-card .team-cell { gap:6px; }
+      .standings-card .team-name { font-size:14px; letter-spacing:0; }
+      .rank-col { font-size:14px; width:22px; }
+      .wins-col, .losses-col { font-size:16px; }
+      td.team-td { min-width:80px; }
+      .tie-pill { padding:2px 5px; letter-spacing:0.05em; }
+      .mini-table th, .mini-table td { padding-left:7px; padding-right:7px; }
+      .mini-table .team-logo { width:22px; height:22px; }
+      .mini-table .team-cell { gap:6px; }
+      .h2h-game-row { flex-wrap:wrap; row-gap:2px; }
+      .h2h-teams { flex-basis:100%; }
+      .h2h-team { max-width:none; }
+      .h2h-score { text-align:left; min-width:0; }
+      .h2h-meta { margin-left:auto; }
+      main { padding:20px 12px; gap:24px; }
+      .legend { gap:8px 14px; }
+      .btn-label { display:none; }
+      .tie-card-header { padding:10px 12px; }
+      header { padding:0 12px; height:56px; }
+      .logo { font-size:17px; letter-spacing:0.04em; }
+      .header-right { gap:6px; }
+      .last-updated { display:none; }
+      .season-badge { white-space:nowrap; font-size:12px; padding:3px 8px; }
+      .icon-btn { padding:5px 9px; }
+    }
+    @media (max-width:430px) { .season-badge { display:none; } }
+    @media (max-width:380px) {
+      .hide-xs { display:none; }
+      .standings-card td, .standings-card th, .mini-table th, .mini-table td { padding-left:4px; padding-right:4px; }
+      .standings-card th, .mini-table th { letter-spacing:0.04em; }
+      td.team-td { min-width:60px; }
+      .standings-card .team-logo, .mini-table .team-logo { width:18px; height:18px; }
+      .standings-card .team-cell, .mini-table .team-cell { gap:5px; }
+    }
 
     .tie-pill { display:inline-flex; align-items:center; background:var(--bc,rgba(232,181,0,0.12)); border:1px solid var(--pc,rgba(232,181,0,0.35)); color:var(--pc,#e8b500); font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.1em; padding:2px 7px; border-radius:20px; text-transform:uppercase; cursor:pointer; transition:filter 0.15s; }
     .tie-pill:hover { filter:brightness(1.2); }
@@ -147,12 +192,12 @@
 
     .mini-table { width:100%; border-collapse:collapse; }
     .mini-table thead tr { border-bottom:1px solid var(--border); }
-    .mini-table th { font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); padding:8px 14px; text-align:left; }
+    .mini-table th { font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); padding:8px 14px; text-align:left; white-space:nowrap; }
     .mini-table th.num { text-align:right; }
     .mini-table tbody tr { border-bottom:1px solid var(--border); transition:background 0.12s; }
     .mini-table tbody tr:last-child { border-bottom:none; }
     .mini-table tbody tr:hover { background:var(--mini-hover); }
-    .mini-table td { padding:10px 14px; }
+    .mini-table td { padding:10px 14px; white-space:nowrap; }
     .mini-table td.num { text-align:right; font-variant-numeric:tabular-nums; }
     .mini-rank { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; width:24px; color:var(--muted); }
     .h2h-record { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:16px; white-space:nowrap; }
@@ -176,7 +221,7 @@
     .h2h-game-row:last-child { border-bottom:none; }
     .h2h-game-row.upcoming { color:var(--muted); font-style:italic; }
     .h2h-teams { display:flex; align-items:center; gap:6px; flex:1; min-width:0; }
-    .h2h-team { font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:13px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px; }
+    .h2h-team { font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:13px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px; min-width:0; }
     .h2h-vs   { color:var(--muted); font-size:11px; }
     .h2h-score { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; white-space:nowrap; min-width:56px; text-align:center; }
     .h2h-score .win  { color:var(--green); }
@@ -201,7 +246,7 @@
   <div class="header-right">
     <span class="last-updated" id="last-updated"></span>
     <button class="icon-btn theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle light/dark mode">☀️</button>
-    <button class="icon-btn" onclick="refreshAll()">&#8635; Refresh</button>
+    <button class="icon-btn" onclick="refreshAll()" title="Refresh">&#8635;<span class="btn-label"> Refresh</span></button>
     <div class="season-badge">2026&#8211;27</div>
   </div>
 </header>
@@ -469,15 +514,15 @@ function buildStandingsTable(standings) {
     const cutoffCls = !isRank ? '' : t.rank === PLAYOFF_CUTOFF+1 ? 'cutoff-playoffs' : t.rank === PLAYIN_CUTOFF+1 ? 'cutoff-playin' : '';
     const zoneCls   = t.rank <= PLAYOFF_CUTOFF ? 'zone-playoffs' : t.rank <= PLAYIN_CUTOFF ? 'zone-playin' : '';
     const cls = (cutoffCls+' '+zoneCls).trim();
-    return '<tr class="'+cls+'"><td class="rank-col">'+t.rank+'</td><td>'+teamCell(t)+'</td><td class="wins-col">'+t.wins+'</td><td class="losses-col">'+t.losses+'</td><td class="num">'+t.pf+'</td><td class="num">'+t.pa+'</td><td class="num">'+fmtDiff(t.diff)+'</td><td class="num l5-col">'+fmtLast5(t)+'</td><td class="num streak-col '+(t.streakType==='W'?'streak-w':'streak-l')+'">'+(t.streak ? t.streak+t.streakType : '')+'</td><td>'+pill+'</td></tr>';
+    return '<tr class="'+cls+'"><td class="rank-col">'+t.rank+'</td><td class="team-td">'+teamCell(t)+'</td><td class="wins-col">'+t.wins+'</td><td class="losses-col">'+t.losses+'</td><td class="num hide-sm">'+t.pf+'</td><td class="num hide-sm">'+t.pa+'</td><td class="num">'+fmtDiff(t.diff)+'</td><td class="num l5-col hide-xs">'+fmtLast5(t)+'</td><td class="num streak-col '+(t.streakType==='W'?'streak-w':'streak-l')+'">'+(t.streak ? t.streak+t.streakType : '')+'</td><td>'+pill+'</td></tr>';
   }).join('');
-  const th = (key, label, title) => {
+  const th = (key, label, title, cls) => {
     const on = SORT.key === key;
     const arr = key === 'rank' ? '' : '<span class="sort-arr">'+(on && SORT.dir < 0 ? '&#9650;' : '&#9660;')+'</span>';
-    return '<th class="'+(key==='rank'?'':'num ')+'sortable'+(on?' sorted':'')+'" onclick="sortStandings(\''+key+'\')" title="'+title+'">'+label+arr+'</th>';
+    return '<th class="'+(key==='rank'?'':'num ')+'sortable'+(cls?' '+cls:'')+(on?' sorted':'')+'" onclick="sortStandings(\''+key+'\')" title="'+title+'">'+label+arr+'</th>';
   };
   const note = isRank ? '' : '<span class="sort-note" onclick="sortStandings(\'rank\')">Sorted by '+(SORT.key==='l5'?'last 5':'streak')+' &middot; reset</span>';
-  return '<div class="section-label">Full Standings'+note+'</div><div class="standings-card"><table><thead><tr>'+th('rank','#','Sort by standings')+'<th>Team</th><th class="num">W</th><th class="num">L</th><th class="num">PF</th><th class="num">PA</th><th class="num">DIFF</th>'+th('l5','L5','Last 5 games — sort by wins, then streak')+th('strk','STRK','Current streak — sort by streak, then last-5 wins')+'<th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  return '<div class="section-label">Full Standings'+note+'</div><div class="standings-card"><table><thead><tr>'+th('rank','#','Sort by standings')+'<th>Team</th><th class="num">W</th><th class="num">L</th><th class="num hide-sm">PF</th><th class="num hide-sm">PA</th><th class="num">DIFF</th>'+th('l5','L5','Last 5 games — sort by wins, then streak','hide-xs')+th('strk','STRK','Current streak — sort by streak, then last-5 wins')+'<th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
 /* ── 7. H2H PANEL ── */
@@ -510,10 +555,10 @@ function buildTieCard(group, idx, played, upcoming) {
   const panelId = 'h2h-panel-'+idx;
   const btnId   = 'h2h-btn-'+idx;
   const rows    = group.teams.map((t,i) =>
-    '<tr><td class="mini-rank" style="'+(i===0?'color:'+p.pill:'')+'">'+(i+1)+'</td><td>'+teamCell(t)+'</td><td class="num"><span class="h2h-record"><span class="w">'+t.h2h_w+'</span><span class="l">&ndash;'+t.h2h_l+'</span></span></td><td class="num">'+fmtH2HDiff(t.h2h_diff)+'</td><td class="num" style="font-size:12px">'+fmtDiff(t.diff)+'</td></tr>'
+    '<tr><td class="mini-rank" style="'+(i===0?'color:'+p.pill:'')+'">'+(i+1)+'</td><td class="team-td">'+teamCell(t)+'</td><td class="num"><span class="h2h-record"><span class="w">'+t.h2h_w+'</span><span class="l">&ndash;'+t.h2h_l+'</span></span></td><td class="num">'+fmtH2HDiff(t.h2h_diff)+'</td><td class="num" style="font-size:12px">'+fmtDiff(t.diff)+'</td></tr>'
   ).join('');
   const note = resolveNote(group.teams);
-  return '<div class="tie-card" id="tie-'+idx+'"><div class="tie-card-header" style="border-left:4px solid '+p.pill+'"><div><div class="tie-wins-badge" style="color:'+p.pill+'">'+group.wins+'W</div><div class="tie-wins-label">'+group.teams.length+' Teams Tied</div></div><div class="tb-tag" style="color:'+p.pill+';border-color:'+p.pill+';background:'+p.bg+'">TIEBREAKER</div></div><table class="mini-table"><thead><tr><th></th><th>Team</th><th class="num">H2H</th><th class="num">H2H +/&minus;</th><th class="num">OVR +/&minus;</th></tr></thead><tbody>'+rows+'</tbody></table>'+(note?'<div class="mini-tb-note">'+note+'</div>':'')+buildH2HPanel(group,played,upcoming,panelId)+'<button class="see-results-btn" id="'+btnId+'" onclick="toggleH2H(\''+panelId+'\',\''+btnId+'\')"><span class="arr">&#9660;</span> See results &amp; upcoming games</button></div>';
+  return '<div class="tie-card" id="tie-'+idx+'"><div class="tie-card-header" style="border-left:4px solid '+p.pill+'"><div><div class="tie-wins-badge" style="color:'+p.pill+'">'+group.wins+'W</div><div class="tie-wins-label">'+group.teams.length+' Teams Tied</div></div><div class="tb-tag" style="color:'+p.pill+';border-color:'+p.pill+';background:'+p.bg+'">TIEBREAKER</div></div><table class="mini-table"><thead><tr><th></th><th>Team</th><th class="num">H2H</th><th class="num">H2H&nbsp;+/&minus;</th><th class="num">OVR&nbsp;+/&minus;</th></tr></thead><tbody>'+rows+'</tbody></table>'+(note?'<div class="mini-tb-note">'+note+'</div>':'')+buildH2HPanel(group,played,upcoming,panelId)+'<button class="see-results-btn" id="'+btnId+'" onclick="toggleH2H(\''+panelId+'\',\''+btnId+'\')"><span class="arr">&#9660;</span> See results &amp; upcoming games</button></div>';
 }
 
 function buildRightPanel(tiedGroups, played, upcoming) {
