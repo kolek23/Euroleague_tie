@@ -78,7 +78,7 @@
 
     /* ── Layout ── */
     main { max-width:1340px; margin:0 auto; padding:36px 24px; display:grid; grid-template-columns:1fr 494px; gap:28px; align-items:start; }
-    @media (max-width:900px) { main { grid-template-columns:1fr; } }
+    @media (max-width:900px) { main { grid-template-columns:minmax(0,1fr); } .right-panel { min-width:0; } }
 
     .section-label { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
     .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
@@ -113,6 +113,20 @@
     .streak-col { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:0.03em; }
     .standings-card td.streak-w { color:var(--green); }
     .standings-card td.streak-l { color:var(--red); }
+    .l5-col { white-space:nowrap; }
+    .l5-rec { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; color:var(--text); margin-right:6px; }
+    .l5-dots { display:inline-flex; gap:3px; vertical-align:middle; }
+    .l5-dot { width:7px; height:7px; border-radius:50%; background:var(--red); }
+    .l5-dot.w { background:var(--green); }
+    .standings-card th.sortable { cursor:pointer; user-select:none; white-space:nowrap; }
+    .standings-card th.sortable:hover { color:var(--text); }
+    .standings-card th.sorted { color:var(--accent); }
+    .sort-arr { font-size:9px; margin-left:3px; opacity:0.5; }
+    .standings-card th.sorted .sort-arr { opacity:1; }
+    .sort-note { margin-left:auto; font-weight:600; letter-spacing:0.1em; color:var(--accent); cursor:pointer; }
+    .sort-note:hover { text-decoration:underline; }
+    #standings-wrap { min-width:0; }
+    @media (max-width:600px) { .l5-dots { display:none; } .standings-card { overflow-x:auto; } .standings-card td, .standings-card th { padding-left:7px; padding-right:7px; } .standings-card .team-name { max-width:120px; } .standings-card .team-logo { width:22px; height:22px; } }
 
     .tie-pill { display:inline-flex; align-items:center; background:var(--bc,rgba(232,181,0,0.12)); border:1px solid var(--pc,rgba(232,181,0,0.35)); color:var(--pc,#e8b500); font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.1em; padding:2px 7px; border-radius:20px; text-transform:uppercase; cursor:pointer; transition:filter 0.15s; }
     .tie-pill:hover { filter:brightness(1.2); }
@@ -337,7 +351,15 @@ function buildStandings(played) {
     for (const code of [g.homeCode, g.awayCode]) {
       const t = teams[code], r = g.winner === code ? 'W' : 'L';
       if (t.streakType === r) t.streak++; else { t.streakType = r; t.streak = 1; }
+      (t.results = t.results || []).push(r);
     }
+  }
+  /* Last 5: most recent five results (oldest → newest). */
+  for (const t of Object.values(teams)) {
+    t.last5 = (t.results || []).slice(-5);
+    t.l5w = t.last5.filter(r => r === 'W').length;
+    t.l5l = t.last5.length - t.l5w;
+    t.streakSigned = t.streakType === 'W' ? t.streak : -(t.streak || 0);
   }
   return Object.values(teams)
     .map(t => ({ ...t, diff: t.pf - t.pa }))
@@ -419,20 +441,43 @@ function resolveNote(teams) {
 }
 
 /* ── 6. STANDINGS TABLE ── */
+/* Sort modes: 'rank' (official standings), 'l5' (last-5 wins, then streak), 'strk' (streak, then last-5 wins). */
+let STANDINGS = [], SORT = { key:'rank', dir:1 };
+const SORTERS = {
+  rank: (a,b) => a.rank - b.rank,
+  l5:   (a,b) => (b.l5w - a.l5w) || (b.streakSigned - a.streakSigned) || (a.rank - b.rank),
+  strk: (a,b) => (b.streakSigned - a.streakSigned) || (b.l5w - a.l5w) || (a.rank - b.rank)
+};
+function sortStandings(key) {
+  SORT = (SORT.key === key && key !== 'rank') ? { key, dir:-SORT.dir } : { key, dir:1 };
+  document.getElementById('standings-wrap').innerHTML = buildStandingsTable(STANDINGS);
+}
+const fmtLast5 = t => '<span class="l5-rec">'+t.l5w+'&ndash;'+t.l5l+'</span><span class="l5-dots" title="Oldest → newest">'+
+  t.last5.map(r => '<span class="l5-dot'+(r==='W'?' w':'')+'"></span>').join('')+'</span>';
+
 function buildStandingsTable(standings) {
-  const rows = standings.map(t => {
+  const isRank = SORT.key === 'rank';
+  const list = standings.slice().sort((a,b) => SORT.dir * SORTERS[SORT.key](a,b));
+  const rows = list.map(t => {
     const idx = t.tieGroupIdx;
     let pill = '';
     if (idx !== undefined) {
       const p = TIE_PALETTE[idx % TIE_PALETTE.length];
       pill = '<span class="tie-pill" style="--pc:'+p.pill+';--bc:'+p.bg+'" onclick="scrollToTie('+idx+')" title="View tiebreaker">TIE</span>';
     }
-    const cutoffCls = t.rank === PLAYOFF_CUTOFF+1 ? 'cutoff-playoffs' : t.rank === PLAYIN_CUTOFF+1 ? 'cutoff-playin' : '';
+    // Cutoff lines only make sense in official standings order.
+    const cutoffCls = !isRank ? '' : t.rank === PLAYOFF_CUTOFF+1 ? 'cutoff-playoffs' : t.rank === PLAYIN_CUTOFF+1 ? 'cutoff-playin' : '';
     const zoneCls   = t.rank <= PLAYOFF_CUTOFF ? 'zone-playoffs' : t.rank <= PLAYIN_CUTOFF ? 'zone-playin' : '';
     const cls = (cutoffCls+' '+zoneCls).trim();
-    return '<tr class="'+cls+'"><td class="rank-col">'+t.rank+'</td><td>'+teamCell(t)+'</td><td class="wins-col">'+t.wins+'</td><td class="losses-col">'+t.losses+'</td><td class="num">'+t.pf+'</td><td class="num">'+t.pa+'</td><td class="num">'+fmtDiff(t.diff)+'</td><td class="num streak-col '+(t.streakType==='W'?'streak-w':'streak-l')+'">'+(t.streak ? t.streak+t.streakType : '')+'</td><td>'+pill+'</td></tr>';
+    return '<tr class="'+cls+'"><td class="rank-col">'+t.rank+'</td><td>'+teamCell(t)+'</td><td class="wins-col">'+t.wins+'</td><td class="losses-col">'+t.losses+'</td><td class="num">'+t.pf+'</td><td class="num">'+t.pa+'</td><td class="num">'+fmtDiff(t.diff)+'</td><td class="num l5-col">'+fmtLast5(t)+'</td><td class="num streak-col '+(t.streakType==='W'?'streak-w':'streak-l')+'">'+(t.streak ? t.streak+t.streakType : '')+'</td><td>'+pill+'</td></tr>';
   }).join('');
-  return '<div class="section-label">Full Standings</div><div class="standings-card"><table><thead><tr><th></th><th>Team</th><th class="num">W</th><th class="num">L</th><th class="num">PF</th><th class="num">PA</th><th class="num">DIFF</th><th class="num" title="Current streak">STRK</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  const th = (key, label, title) => {
+    const on = SORT.key === key;
+    const arr = key === 'rank' ? '' : '<span class="sort-arr">'+(on && SORT.dir < 0 ? '&#9650;' : '&#9660;')+'</span>';
+    return '<th class="'+(key==='rank'?'':'num ')+'sortable'+(on?' sorted':'')+'" onclick="sortStandings(\''+key+'\')" title="'+title+'">'+label+arr+'</th>';
+  };
+  const note = isRank ? '' : '<span class="sort-note" onclick="sortStandings(\'rank\')">Sorted by '+(SORT.key==='l5'?'last 5':'streak')+' &middot; reset</span>';
+  return '<div class="section-label">Full Standings'+note+'</div><div class="standings-card"><table><thead><tr>'+th('rank','#','Sort by standings')+'<th>Team</th><th class="num">W</th><th class="num">L</th><th class="num">PF</th><th class="num">PA</th><th class="num">DIFF</th>'+th('l5','L5','Last 5 games — sort by wins, then streak')+th('strk','STRK','Current streak — sort by streak, then last-5 wins')+'<th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
 /* ── 7. H2H PANEL ── */
@@ -511,7 +556,8 @@ async function init() {
     const tiedGroups   = computeTiedGroups(rawStandings, played);
     const standings    = applyTiebreakersToStandings(rawStandings, tiedGroups);
 
-    main.innerHTML = '<div>'+buildStandingsTable(standings)+'</div><div class="right-panel">'+buildRightPanel(tiedGroups,played,upcoming)+'</div>';
+    STANDINGS = standings;
+    main.innerHTML = '<div id="standings-wrap">'+buildStandingsTable(standings)+'</div><div class="right-panel">'+buildRightPanel(tiedGroups,played,upcoming)+'</div>';
     document.getElementById('last-updated').textContent = 'Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   } catch(err) {
     main.innerHTML = '<div class="error-box"><strong>Could not load standings.</strong><br><br>'+err.message+'<br><br>The Euroleague API may be temporarily unavailable. Try refreshing in a moment.</div>';
