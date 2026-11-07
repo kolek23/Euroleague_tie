@@ -156,9 +156,12 @@
       return (c * s.d) || String(a.name).localeCompare(String(b.name));
     });
   }
-  function th(tableKey, k, label, num) {
+  // label may be [long, short] to show a shorter header on phones; cls adds e.g. 'hide-sm'
+  const lbl = l => Array.isArray(l) ? '<span class="lbl-l">' + l[0] + '</span><span class="lbl-s">' + l[1] + '</span>' : l;
+  function th(tableKey, k, label, num, cls) {
     const s = state.sort[tableKey], on = s.k === k;
-    return '<th class="sortable' + (num ? ' num' : '') + (on ? ' sorted' : '') + '" data-sort="' + tableKey + ':' + k + '">' + label + (on ? (s.d < 0 ? ' ▾' : ' ▴') : '') + '</th>';
+    label = lbl(label);
+    return '<th class="sortable' + (num ? ' num' : '') + (cls ? ' ' + cls : '') + (on ? ' sorted' : '') + '" data-sort="' + tableKey + ':' + k + '">' + label + (on ? (s.d < 0 ? ' ▾' : ' ▴') : '') + '</th>';
   }
 
   /* ── ATTENDANCE ── */
@@ -176,15 +179,16 @@
     });
     const known = rows.filter(r => r.att);
     const avg = known.length ? known.reduce((t, r) => t + r.att, 0) / known.length : 0;
-    const head = (k, label, num) => {
+    const head = (k, label, num, cls) => {
       const on = s.k === k;
-      return '<th class="sortable' + (num ? ' num' : '') + (on ? ' sorted' : '') + '" data-sort="game:' + k + '">' + label + (on ? (s.d < 0 ? ' \u25BE' : ' \u25B4') : '') + '</th>';
+      label = lbl(label);
+      return '<th class="sortable' + (num ? ' num' : '') + (cls ? ' ' + cls : '') + (on ? ' sorted' : '') + '" data-sort="game:' + k + '">' + label + (on ? (s.d < 0 ? ' \u25BE' : ' \u25B4') : '') + '</th>';
     };
-    const body = rows.map(r => '<tr><td>' + esc(fmtDate(r.date)) + '</td><td class="num">' + (r.round || '') + '</td><td>' + esc(r.phase) + '</td><td class="wrap">' + esc(r.opp) +
+    const body = rows.map(r => '<tr><td>' + esc(fmtDate(r.date)) + '</td><td class="num hide-sm">' + (r.round || '') + '</td><td class="hide-sm">' + esc(r.phase) + '</td><td class="wrap">' + esc(r.opp) +
       '</td><td class="num">' + esc(r.score) + '</td><td class="num">' + (r.att ? fmt(r.att) : '<span class="muted">n/a</span>') +
-      '</td><td class="num muted">' + (r.att && avg ? (r.att >= avg ? '+' : '\u2212') + fmt(Math.abs(r.att - avg)) : '') + '</td></tr>').join('');
-    return '<table class="subtable"><thead><tr>' + head('date', 'Date') + head('round', 'Round', 1) + head('phase', 'Phase') + head('opp', 'Opponent') + head('margin', 'Result', 1) +
-      head('att', 'Attendance', 1) + '<th class="num">vs team avg</th></tr></thead><tbody>' + body + '</tbody></table>';
+      '</td><td class="num muted hide-sm">' + (r.att && avg ? (r.att >= avg ? '+' : '\u2212') + fmt(Math.abs(r.att - avg)) : '') + '</td></tr>').join('');
+    return '<table class="subtable"><thead><tr>' + head('date', 'Date') + head('round', 'Round', 1, 'hide-sm') + head('phase', 'Phase', 0, 'hide-sm') + head('opp', 'Opponent') + head('margin', 'Result', 1) +
+      head('att', ['Attendance', 'Att.'], 1) + '<th class="num hide-sm">vs team avg</th></tr></thead><tbody>' + body + '</tbody></table>';
   }
 
   function renderAttendance(data) {
@@ -214,9 +218,9 @@
     const body = rows.map((r, i) => {
       const open = state.openTeam === r.code;
       return '<tr class="team-row' + (open ? ' open' : '') + '" data-team="' + esc(r.code) + '"><td class="rank">' + (i + 1) + '</td><td class="name">' + (open ? '\u25BE ' : '\u25B8 ') + teamName(data, r.code) + '</td>' +
-      '<td class="num">' + r.n + '</td><td class="num">' + fmt(r.total) + '</td>' +
+      '<td class="num">' + r.n + '</td><td class="num hide-sm">' + fmt(r.total) + '</td>' +
       '<td class="num">' + fmt(r.avg) + '<span class="bar" style="width:' + Math.round(40 * r.avg / topAvg) + 'px"></span></td>' +
-      '<td class="num">' + fmt(r.max) + '</td><td class="num">' + fmt(r.min) + '</td><td class="num">' + fmt1(r.pct) + '%</td></tr>' +
+      '<td class="num hide-xs">' + fmt(r.max) + '</td><td class="num hide-sm">' + fmt(r.min) + '</td><td class="num">' + fmt1(r.pct) + '%</td></tr>' +
         (open ? '<tr class="ref-detail"><td colspan="8">' + teamGames(data, games, r.code) + '</td></tr>' : '');
     }).join('');
     const top = withAtt.slice().sort((a, b) => b[C.att] - a[C.att]).slice(0, 10).map((r, i) =>
@@ -224,8 +228,8 @@
       '<div class="muted" style="font-size:11px">' + esc(fmtDate(r[C.date])) + '</div></td><td class="num">' + fmt(r[C.att]) + '</td></tr>').join('');
 
     h += '<div class="split"><div><div class="section-label">Home attendance by team</div><div class="tcard"><table><thead><tr><th></th>' +
-      th('att', 'name', 'Team') + th('att', 'n', 'Home games', 1) + th('att', 'total', 'Total', 1) + th('att', 'avg', 'Average', 1) +
-      th('att', 'max', 'Max', 1) + th('att', 'min', 'Min', 1) + th('att', 'pct', 'Avg % of max', 1) +
+      th('att', 'name', 'Team') + th('att', 'n', ['Home games', 'GP'], 1) + th('att', 'total', 'Total', 1, 'hide-sm') + th('att', 'avg', ['Average', 'Avg'], 1) +
+      th('att', 'max', 'Max', 1, 'hide-xs') + th('att', 'min', 'Min', 1, 'hide-sm') + th('att', 'pct', ['Avg % of max', '% max'], 1) +
       '</tr></thead><tbody>' + body + '</tbody></table></div></div>' +
       '<div><div class="section-label">Ten biggest crowds</div><div class="tcard"><table><tbody>' + top + '</tbody></table></div></div></div>' +
       '<div class="foot-note">Attendance is the figure published in each official boxscore. Click a team to see all its home games (click a column header to sort). Games with no figure are left out of totals and averages. “Avg % of max” compares a team’s average with its own biggest home crowd of the season.</div>';
@@ -276,7 +280,7 @@
       }
     });
     h += '<div class="section-label">Referee assignments</div><div class="tcard"><table><thead><tr><th></th>' +
-      th('ref', 'name', 'Referee') + th('ref', 'games', 'Games', 1) + th('ref', 'homePct', 'Home win %', 1) + th('ref', 'pts', 'Avg total pts', 1) + th('ref', 'margin', 'Avg margin', 1) +
+      th('ref', 'name', 'Referee') + th('ref', 'games', ['Games', 'GP'], 1) + th('ref', 'homePct', ['Home win %', 'Home W%'], 1) + th('ref', 'pts', ['Avg total pts', 'Pts'], 1) + th('ref', 'margin', ['Avg margin', 'Margin'], 1) +
       '</tr></thead><tbody>' + (body || '<tr><td colspan="6" class="empty">No referees match.</td></tr>') + '</tbody></table></div>' +
       '<div class="foot-note">Each game has three referees (four in some older seasons, all listed); every one of them is credited with the game. Home win %, average total points and average margin describe the games a referee worked, not the referee’s own decisions. Click a row to see the games. “Lithuanian referees” = the referees listed as Lithuanian in the Euroleague referee registry (Brazauskas, Jankauskas, Jasevicius, Laurinavicius, Pilipauskas, Rimkus, Skerys, Sukys, Vilius) plus Saulius Racys, who is registered under Sweden but is a Lithuanian referee.</div>';
     return h;
@@ -327,13 +331,13 @@
     rows.forEach((r, i) => {
       const open = state.openRef === r.raw;
       body += '<tr class="ref-row' + (open ? ' open' : '') + '" data-ref="' + esc(r.raw) + '"><td class="rank">' + (i + 1) + '</td><td class="name">' + (open ? '\u25BE ' : '\u25B8 ') + esc(r.name) +
-        (isLtu(r.raw) ? '<span class="ltu-tag">LTU</span>' : '') + '</td><td class="num">' + r.n + '</td><td class="num">' + r.w + '</td><td class="num">' + r.l + '</td><td class="num">' + fmt1(r.pct) + '%</td>' +
-        '<td class="num">' + wl(r.hw, r.hl) + '</td><td class="num">' + wl(r.aw, r.al) + '</td><td class="num">' + sgn(r.avg) + '</td></tr>';
+        (isLtu(r.raw) ? '<span class="ltu-tag">LTU</span>' : '') + '</td><td class="num hide-sm">' + r.n + '</td><td class="num">' + r.w + '</td><td class="num">' + r.l + '</td><td class="num">' + fmt1(r.pct) + '%</td>' +
+        '<td class="num hide-sm">' + wl(r.hw, r.hl) + '</td><td class="num hide-sm">' + wl(r.aw, r.al) + '</td><td class="num">' + sgn(r.avg) + '</td></tr>';
       if (open) body += '<tr class="ref-detail"><td colspan="9">' + r.list.slice().sort((a, b) => b[C.date].localeCompare(a[C.date])).map(g => zalGameLine(data, g, r.raw)).join('') + '</td></tr>';
     });
     h += '<div class="section-label">Zalgiris Kaunas record by referee</div><div class="tcard"><table><thead><tr><th></th>' +
-      th('zal', 'name', 'Referee') + th('zal', 'n', 'Games', 1) + th('zal', 'w', 'W', 1) + th('zal', 'l', 'L', 1) + th('zal', 'pct', 'Win %', 1) +
-      '<th class="num">Home</th><th class="num">Away</th>' + th('zal', 'avg', 'Avg margin', 1) +
+      th('zal', 'name', 'Referee') + th('zal', 'n', 'Games', 1, 'hide-sm') + th('zal', 'w', 'W', 1) + th('zal', 'l', 'L', 1) + th('zal', 'pct', 'Win %', 1) +
+      '<th class="num hide-sm">Home</th><th class="num hide-sm">Away</th>' + th('zal', 'avg', ['Avg margin', 'Margin'], 1) +
       '</tr></thead><tbody>' + (body || '<tr><td colspan="9" class="empty">No referees match.</td></tr>') + '</tbody></table></div>' +
       '<div class="foot-note">Record of Zalgiris Kaunas in the games each referee worked (every game has three or four referees, so each game appears under each of their names). Small samples swing wildly \u2014 use \u201CMin. games\u201D to filter. Click a row to list the games.</div>';
     return h;
@@ -369,16 +373,16 @@
     const line = (key, label, rec, recWo, list, strong) => {
       const open = state.openRef === key;
       let t = '<tr class="ref-row' + (open ? ' open' : '') + '" data-ref="' + esc(key) + '"' + (strong ? ' style="font-weight:700"' : '') + '><td class="name">' + (open ? '▾ ' : '▸ ') + esc(label) + '</td>' +
-        '<td class="num">' + rec.n + '</td><td class="num">' + rec.w + '</td><td class="num">' + rec.l + '</td><td class="num">' + (rec.n ? fmt1(rec.pct) + '%' : '—') + '</td>' +
-        '<td class="num">' + wl(rec.hw, rec.hl) + '</td><td class="num">' + wl(rec.aw, rec.al) + '</td><td class="num">' + (rec.n ? sgn(rec.avg) : '—') + '</td>' +
-        '<td class="num muted">' + (recWo.n ? wl(recWo.w, recWo.l) + ' (' + fmt1(recWo.pct) + '%)' : '—') + '</td></tr>';
+        '<td class="num hide-sm">' + rec.n + '</td><td class="num">' + rec.w + '</td><td class="num">' + rec.l + '</td><td class="num">' + (rec.n ? fmt1(rec.pct) + '%' : '—') + '</td>' +
+        '<td class="num hide-sm">' + wl(rec.hw, rec.hl) + '</td><td class="num hide-sm">' + wl(rec.aw, rec.al) + '</td><td class="num hide-xs">' + (rec.n ? sgn(rec.avg) : '—') + '</td>' +
+        '<td class="num muted">' + (recWo.n ? wl(recWo.w, recWo.l) + '<span class="hide-sm"> (' + fmt1(recWo.pct) + '%)</span>' : '—') + '</td></tr>';
       if (open) t += '<tr class="ref-detail"><td colspan="9">' + (list.length ? list.slice().sort((a, b) => b.r[C.date].localeCompare(a.r[C.date])).map(x => zalGameLine(x.d, x.r, PUKL)).join('') : '<span class="muted">No games.</span>') + '</td></tr>';
       return t;
     };
     let body = line('ALL', 'All seasons', total, totalWithout, allWith, true);
     for (const x of seasons) body += line('S:' + x.data.season, seasonLabel(x.data.season), x.rec, x.recWithout, x.withP.map(r => ({ r:r, d:x.data })), false);
     h += '<div class="section-label">Zalgiris Kaunas record in games refereed by Sasa Pukl</div><div class="tcard"><table><thead><tr>' +
-      '<th>Season</th><th class="num">Games</th><th class="num">W</th><th class="num">L</th><th class="num">Win %</th><th class="num">Home</th><th class="num">Away</th><th class="num">Avg margin</th><th class="num">Without Pukl</th>' +
+      '<th>Season</th><th class="num hide-sm">Games</th><th class="num">W</th><th class="num">L</th><th class="num">Win %</th><th class="num hide-sm">Home</th><th class="num hide-sm">Away</th><th class="num hide-xs">' + lbl(['Avg margin', 'Margin']) + '</th><th class="num">' + lbl(['Without Pukl', 'W/o Pukl']) + '</th>' +
       '</tr></thead><tbody>' + body + '</tbody></table></div>' +
       '<div class="foot-note">Sasa Pukl is one of the referees on the crew in each of these games, so this is Zalgiris’ record when he is on the crew — not a measure of his own decisions. “Without Pukl” is Zalgiris’ record in the same season in all other games. Click a row to see the games.</div>';
     return h;
